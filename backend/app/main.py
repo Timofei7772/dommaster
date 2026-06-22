@@ -50,19 +50,73 @@ async def lifespan(app: FastAPI):
         if count == 0:
             logger.info("Первичное заполнение базы данных...")
             seeds = [
-                "INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Отделка','Штукатурка стен цементная','м²',420,'Салават','Башкортостан')",
-                "INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Отделка','Штукатурка стен цементная','м²',450,'Стерлитамак','Башкортостан')",
-                "INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Отделка','Штукатурка стен цементная','м²',380,'Ишимбай','Башкортостан')",
-                "INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Отделка','Шпатлёвка стен','м²',280,'Салават','Башкортостан')",
-                "INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Отделка','Шпатлёвка стен','м²',300,'Стерлитамак','Башкортостан')",
-                "INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Полы','Стяжка пола','м²',550,'Салават','Башкортостан')",
-                "INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Полы','Стяжка пола','м²',580,'Стерлитамак','Башкортостан')",
-                "INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Полы','Укладка ламината','м²',380,'Салават','Башкортостан')",
-                "INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Плитка','Укладка плитки напольной','м²',1200,'Салават','Башкортостан')",
-                "INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Плитка','Укладка плитки напольной','м²',1300,'Стерлитамак','Башкортостан')",
-                "INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Сантехника','Установка унитаза','шт',2500,'Салават','Башкортостан')",
-                "INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Электрика','Прокладка кабеля до 5 мм²','м',180,'Салават','Башкортостан')",
-                "INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Стены','Поклейка обоев','м²',320,'Салават','Башкортостан')",
+                # --- Отделка стен ---
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Отделка','Штукатурка стен цементная','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',420),('Стерлитамак',450),('Ишимбай',380)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Отделка','Штукатурка стен гипсовая','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',380),('Стерлитамак',400),('Ишимбай',350)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Отделка','Шпатлёвка стен','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',280),('Стерлитамак',300),('Ишимбай',250)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Отделка','Грунтовка стен','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',60),('Стерлитамак',70),('Ишимбай',50)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Отделка','Маячковая штукатурка','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',520),('Стерлитамак',550),('Ишимбай',480)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Отделка','Демонтаж штукатурки','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',200),('Стерлитамак',220),('Ишимбай',180)]],
+                # --- Стены (обои, покраска) ---
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Стены','Поклейка обоев флизелиновых','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',350),('Стерлитамак',380),('Ишимбай',320)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Стены','Поклейка обоев виниловых','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',400),('Стерлитамак',430),('Ишимбай',370)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Стены','Поклейка обоев стекло','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',450),('Стерлитамак',480),('Ишимбай',420)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Стены','Покраска стен','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',200),('Стерлитамак',220),('Ишимбай',180)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Стены','Декоративная штукатурка','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',800),('Стерлитамак',850),('Ишимбай',750)]],
+                # --- Потолок ---
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Потолок','Покраска потолка','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',250),('Стерлитамак',270),('Ишимбай',230)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Потолок','Шпатлёвка потолка','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',320),('Стерлитамак',340),('Ишимбай',300)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Потолок','Монтаж натяжного потолка матовый','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',650),('Стерлитамак',680),('Ишимбай',600)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Потолок','Монтаж натяжного потолка глянцевый','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',700),('Стерлитамак',730),('Ишимбай',650)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Потолок','Монтаж ГКЛ потолка','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',550),('Стерлитамак',580),('Ишимбай',520)]],
+                # --- Полы ---
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Полы','Стяжка пола цементная','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',550),('Стерлитамак',580),('Ишимбай',500)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Полы','Наливной пол','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',450),('Стерлитамак',480),('Ишимбай',420)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Полы','Укладка ламината','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',380),('Стерлитамак',400),('Ишимбай',350)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Полы','Укладка паркетной доски','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',500),('Стерлитамак',530),('Ишимбай',470)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Полы','Укладка линолеума','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',250),('Стерлитамак',270),('Ишимбай',230)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Полы','Укладка ковролина','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',280),('Стерлитамак',300),('Ишимбай',260)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Полы','Монтаж плинтуса','мп',{p},'{c}','Башкортостан')" for c,p in [('Салават',150),('Стерлитамак',170),('Ишимбай',130)]],
+                # --- Плитка ---
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Плитка','Укладка плитки напольной','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',1200),('Стерлитамак',1300),('Ишимбай',1100)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Плитка','Укладка плитки настенной','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',1100),('Стерлитамак',1200),('Ишимбай',1000)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Плитка','Укладка керамогранита','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',1300),('Стерлитамак',1400),('Ишимбай',1200)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Плитка','Укладка мозаики','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',1800),('Стерлитамак',1900),('Ишимбай',1700)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Плитка','Затирка швов','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',180),('Стерлитамак',200),('Ишимбай',160)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Плитка','Демонтаж плитки','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',350),('Стерлитамак',370),('Ишимбай',330)]],
+                # --- Сантехника ---
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Сантехника','Установка унитаза','шт',{p},'{c}','Башкортостан')" for c,p in [('Салават',2500),('Стерлитамак',2800),('Ишимбай',2300)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Сантехника','Установка раковины','шт',{p},'{c}','Башкортостан')" for c,p in [('Салават',2000),('Стерлитамак',2200),('Ишимбай',1800)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Сантехника','Установка ванны стальной','шт',{p},'{c}','Башкортостан')" for c,p in [('Салават',3500),('Стерлитамак',3700),('Ишимбай',3300)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Сантехника','Установка ванны акриловой','шт',{p},'{c}','Башкортостан')" for c,p in [('Салават',4000),('Стерлитамак',4200),('Ишимбай',3800)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Сантехника','Установка душевой кабины','шт',{p},'{c}','Башкортостан')" for c,p in [('Салават',5000),('Стерлитамак',5300),('Ишимбай',4800)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Сантехника','Установка смесителя','шт',{p},'{c}','Башкортостан')" for c,p in [('Салават',800),('Стерлитамак',900),('Ишимбай',750)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Сантехника','Установка полотенцесушителя','шт',{p},'{c}','Башкортостан')" for c,p in [('Салават',2000),('Стерлитамак',2200),('Ишимбай',1800)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Сантехника','Монтаж водопровода (полипропилен)','мп',{p},'{c}','Башкортостан')" for c,p in [('Салават',400),('Стерлитамак',420),('Ишимбай',380)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Сантехника','Монтаж канализации','мп',{p},'{c}','Башкортостан')" for c,p in [('Салават',350),('Стерлитамак',370),('Ишимбай',330)]],
+                # --- Электрика ---
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Электрика','Прокладка кабеля до 5 мм²','мп',{p},'{c}','Башкортостан')" for c,p in [('Салават',180),('Стерлитамак',200),('Ишимбай',160)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Электрика','Прокладка кабеля 5-10 мм²','мп',{p},'{c}','Башкортостан')" for c,p in [('Салават',250),('Стерлитамак',270),('Ишимбай',230)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Электрика','Установка розетки','шт',{p},'{c}','Башкортостан')" for c,p in [('Салават',300),('Стерлитамак',320),('Ишимбай',280)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Электрика','Установка выключателя','шт',{p},'{c}','Башкортостан')" for c,p in [('Салават',250),('Стерлитамак',270),('Ишимбай',230)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Электрика','Монтаж электрощита','шт',{p},'{c}','Башкортостан')" for c,p in [('Салават',3000),('Стерлитамак',3200),('Ишимбай',2800)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Электрика','Установка люстры','шт',{p},'{c}','Башкортостан')" for c,p in [('Салават',800),('Стерлитамак',850),('Ишимбай',750)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Электрика','Установка точечного светильника','шт',{p},'{c}','Башкортостан')" for c,p in [('Салават',350),('Стерлитамак',370),('Ишимбай',330)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Электрика','Штробление стен под проводку','мп',{p},'{c}','Башкортостан')" for c,p in [('Салават',200),('Стерлитамак',220),('Ишимбай',180)]],
+                # --- Двери ---
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Двери','Установка межкомнатной двери','шт',{p},'{c}','Башкортостан')" for c,p in [('Салават',2500),('Стерлитамак',2700),('Ишимбай',2300)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Двери','Установка входной двери','шт',{p},'{c}','Башкортостан')" for c,p in [('Салават',3500),('Стерлитамак',3700),('Ишимбай',3300)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Двери','Монтаж дверной коробки','шт',{p},'{c}','Башкортостан')" for c,p in [('Салават',1500),('Стерлитамак',1600),('Ишимбай',1400)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Двери','Установка наличников','мп',{p},'{c}','Башкортостан')" for c,p in [('Салават',200),('Стерлитамак',220),('Ишимбай',180)]],
+                # --- Демонтаж ---
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Демонтаж','Демонтаж перегородки','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',300),('Стерлитамак',320),('Ишимбай',280)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Демонтаж','Демонтаж двери','шт',{p},'{c}','Башкортостан')" for c,p in [('Салават',500),('Стерлитамак',550),('Ишимбай',450)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Демонтаж','Демонтаж сантехники','шт',{p},'{c}','Башкортостан')" for c,p in [('Салават',400),('Стерлитамак',450),('Ишимбай',350)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('Демонтаж','Вынос мусора','м³',{p},'{c}','Башкортостан')" for c,p in [('Салават',1000),('Стерлитамак',1100),('Ишимбай',900)]],
+                # --- Монтаж ГКЛ ---
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('ГКЛ','Монтаж ГКЛ перегородки','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',500),('Стерлитамак',530),('Ишимбай',470)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('ГКЛ','Монтаж ГКЛ стены','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',450),('Стерлитамак',480),('Ишимбай',420)]],
+                *[f"INSERT INTO local_prices (category,name,unit,price,city,region) VALUES ('ГКЛ','Шпаклёвка ГКЛ','м²',{p},'{c}','Башкортостан')" for c,p in [('Салават',200),('Стерлитамак',220),('Ишимбай',180)]],
             ]
             for sql in seeds:
                 await conn.execute(st(sql))

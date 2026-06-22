@@ -26,7 +26,19 @@ def find_free_port(start=8000, end=9000):
                 return port
     return 8000
 
+def load_env():
+    """Загрузить .env из корня проекта (run.py живёт в backend/, .env в parent)."""
+    env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env')
+    if os.path.exists(env_path):
+        with open(env_path) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    k, v = line.split('=', 1)
+                    os.environ.setdefault(k.strip(), v.strip())
+
 def main():
+    load_env()
     if getattr(sys, 'frozen', False):
         sys.path.insert(0, sys._MEIPASS)
         os.chdir(os.path.dirname(sys.executable))
