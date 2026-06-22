@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ZARU Смета</string>
+    <string name="title_activity_main">ZARU Смета</string>
+    <string name="package_name">com.zaru.smeta</string>
+    <string name="custom_url_scheme">com.zaru.smeta</string>
+</resources>

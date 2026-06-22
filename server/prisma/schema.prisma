@@ -1,0 +1,261 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  OWNER
+  MANAGER
+  WORKER
+  CLIENT
+}
+
+enum ProjectStatus {
+  PLANNING
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum StageStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  DONE
+  DELAYED
+}
+
+enum PaymentStatus {
+  PLANNED
+  PAID
+  DELAYED
+}
+
+enum RequestStatus {
+  NEW
+  IN_PROGRESS
+  REVIEW
+  DONE
+}
+
+enum RequestPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model User {
+  id           Int        @id @default(autoincrement())
+  email        String     @unique
+  passwordHash String     @map("password_hash")
+  fullName     String     @map("full_name")
+  phone        String?
+  role         UserRole   @default(WORKER)
+  companyId    Int?       @map("company_id")
+  company      Company?   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  refreshToken String?    @map("refresh_token")
+
+  // Relationships
+  assignedStages    WorkStage[]    @relation("ExecutorStages")
+  assignedRequests  CRMRequest[]   @relation("ExecutorRequests")
+  assignedEstimates EstimateItem[] @relation("ExecutorEstimates")
+  uploadedPhotos    PhotoReport[]  @relation("UploaderPhotos")
+  createdProjects   Project[]      @relation("ProjectCreator")
+
+  @@map("users")
+}
+
+model Company {
+  id          Int      @id @default(autoincrement())
+  name        String
+  logo        String?
+  bankDetails String?  @map("bank_details")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  users    User[]
+  projects Project[]
+
+  @@map("companies")
+}
+
+model Project {
+  id              Int           @id @default(autoincrement())
+  companyId       Int           @map("company_id")
+  company         Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name            String
+  code            String?
+  clientName      String        @map("client_name")
+  clientContact   String?       @map("client_contact")
+  address         String
+  status          ProjectStatus @default(PLANNING)
+  plannedStart    DateTime?     @map("planned_start")
+  plannedEnd      DateTime?     @map("planned_end")
+  actualStart     DateTime?     @map("actual_start")
+  actualEnd       DateTime?     @map("actual_end")
+  budget          Float         @default(0.0)
+  spent           Float         @default(0.0)
+  description     String?       // Contains details, including [SHARE_TOKEN: ...] tags
+  createdById     Int?          @map("created_by_id")
+  creator         User?         @relation("ProjectCreator", fields: [createdById], references: [id])
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  // Relationships
+  stages    WorkStage[]
+  payments  Payment[]
+  photos    PhotoReport[]
+  requests  CRMRequest[]
+  estimates Estimate[]
+
+  @@map("projects")
+}
+
+model WorkStage {
+  id         Int         @id @default(autoincrement())
+  projectId  Int         @map("project_id")
+  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name       String
+  executorId Int?        @map("executor_id")
+  executor   User?       @relation("ExecutorStages", fields: [executorId], references: [id])
+  startDate  DateTime    @map("start_date")
+  endDate    DateTime    @map("end_date")
+  status     StageStatus @default(NOT_STARTED)
+  comments   String?     @map("comments_json") // JSON string of comments array e.g. ["comment1", "comment2"]
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
+
+  // Relationships
+  photos PhotoReport[]
+
+  @@map("work_stages")
+}
+
+model Payment {
+  id            Int           @id @default(autoincrement())
+  projectId     Int           @map("project_id")
+  project       Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  description   String
+  plannedDate   DateTime      @map("planned_date")
+  plannedAmount Float         @map("planned_amount")
+  actualDate    DateTime?     @map("actual_date")
+  actualAmount  Float         @default(0.0) @map("actual_amount")
+  status        PaymentStatus @default(PLANNED)
+  paidAt        DateTime?     @map("paid_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  @@map("payments")
+}
+
+model PhotoReport {
+  id         Int       @id @default(autoincrement())
+  projectId  Int       @map("project_id")
+  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  stageId    Int?      @map("stage_id")
+  stage      WorkStage? @relation(fields: [stageId], references: [id])
+  url        String
+  uploadedBy Int?      @map("uploaded_by")
+  uploader   User?     @relation("UploaderPhotos", fields: [uploadedBy], references: [id])
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@map("photo_reports")
+}
+
+model Estimate {
+  id              Int            @id @default(autoincrement())
+  number          String?        @unique
+  name            String
+  description     String?
+  estimateType    String         @default("local") @map("estimate_type")
+  status          String         @default("draft")
+  projectId       Int?           @map("project_id")
+  project         Project?       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  materialsCost   Float          @default(0.0) @map("materials_cost")
+  laborCost       Float          @default(0.0) @map("labor_cost")
+  machinesCost    Float          @default(0.0) @map("machines_cost")
+  overheadCost    Float          @default(0.0) @map("overhead_cost")
+  profitCost      Float          @default(0.0) @map("profit_cost")
+  totalCost       Float          @default(0.0) @map("total_cost")
+  vatCost         Float          @default(0.0) @map("vat_cost")
+  totalWithVat    Float          @default(0.0) @map("total_with_vat")
+  workCoef        Float          @default(1.8) @map("work_coef")
+  materialCoef    Float          @default(1.04) @map("material_coef")
+  overheadPercent Float          @default(0.0) @map("overhead_percent")
+  profitPercent   Float          @default(0.0) @map("profit_percent")
+  vatPercent      Float          @default(20.0) @map("vat_percent")
+  vatOnTop        Boolean        @default(true) @map("vat_on_top")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  items           EstimateItem[]
+
+  @@map("estimates")
+}
+
+model EstimateItem {
+  id             Int       @id @default(autoincrement())
+  estimateId     Int       @map("estimate_id")
+  estimate       Estimate  @relation(fields: [estimateId], references: [id], onDelete: Cascade)
+  itemNumber     String?   @map("item_number")
+  name           String
+  unit           String    @default("шт")
+  quantity       Float     @default(1.0)
+  materialsPrice Float     @default(0.0) @map("materials_price")
+  laborPrice     Float     @default(0.0) @map("labor_price")
+  machinesPrice  Float     @default(0.0) @map("machines_price")
+  materialsTotal Float     @default(0.0) @map("materials_total")
+  laborTotal     Float     @default(0.0) @map("labor_total")
+  machinesTotal  Float     @default(0.0) @map("machines_total")
+  total          Float     @default(0.0)
+  rowType        String    @default("pr") @map("row_type")
+  isWork         Boolean   @default(true) @map("is_work")
+  executorId     Int?      @map("executor_id")
+  executor       User?     @relation("ExecutorEstimates", fields: [executorId], references: [id])
+  doneAt         DateTime? @map("done_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  @@map("estimate_items")
+}
+
+model CRMRequest {
+  id          Int             @id @default(autoincrement())
+  projectId   Int             @map("project_id")
+  project     Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  status      RequestStatus   @default(NEW)
+  priority    RequestPriority @default(MEDIUM)
+  assignedTo  Int?            @map("assigned_to")
+  assignee    User?           @relation("ExecutorRequests", fields: [assignedTo], references: [id])
+  deadline    DateTime?
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  @@map("crm_requests")
+}
+
+model IntegrationSettings {
+  id          Int       @id @default(autoincrement())
+  companyId   Int       @map("company_id")
+  provider    String    // TELEGRAM, WHATSAPP, VK, AVITO
+  token       String?
+  apiSecret   String?   @map("api_secret")
+  webhookUrl  String?   @map("webhook_url")
+  username    String?
+  status      Boolean   @default(false)
+  lastSyncAt  DateTime? @map("last_sync_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("integration_settings")
+}

@@ -1,0 +1,8 @@
+
+Кэш очищен
+Database path: C:\Users\User\AppData\Roaming\zaru-smeta\smeta_zaru.db
+База данных инициализирована
+Справочник уже содержит 1035 записей. Пропуск импорта.
+Справочник инициализирован: 1035 записей
+Loading alt local: c:\Projects\SmetaAI\frontend\dist\index.html
+Документ создан: C:\Users\User\AppData\Roaming\zaru-smeta\Договоры\Договор_Д-ИМП-755909_1770923255690.docx Заменено полей: 53

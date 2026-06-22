@@ -1,0 +1,108 @@
+{
+  "name": "smetaai-desktop",
+  "version": "2.2.0",
+  "description": "SmetaAI - коммерческая сметная программа с лицензированием",
+  "main": "main.js",
+  "scripts": {
+    "fix": "npm audit fix && npm audit fix --force",
+    "lint": "eslint . --fix",
+    "auto-fix-release": "npm run fix && npm run lint && npx electron-rebuild && npm run build:win",
+    "start": "electron .",
+    "build:renderer": "cd ../frontend && npm run build",
+    "build:win": "npm run build:renderer && electron-builder --win",
+    "build:win:clean": "powershell -ExecutionPolicy Bypass -File scripts/build-clean.ps1 && npm run build:win",
+    "build:win:alt": "powershell -ExecutionPolicy Bypass -File scripts/build-win-alt.ps1",
+    "obfuscate": "javascript-obfuscator src/license-secure.js --output src/license-secure.min.js --compact true --control-flow-flattening true --control-flow-flattening-threshold 0.75 --dead-code-injection true --dead-code-injection-threshold 0.4 --string-array true --string-array-encoding rc4 --string-array-threshold 0.8 --self-defending true --disable-console-output true",
+    "build:secure": "npm run obfuscate && npm run build:renderer && electron-builder --win",
+    "release": "npm install && npx electron-rebuild && npm run build:win"
+  },
+  "author": "ZARU",
+  "license": "Commercial",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.13.3",
+    "javascript-obfuscator": "^5.1.0",
+    "mdb-reader": "^3.1.0"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "docxtemplater": "^3.67.6",
+    "electron-store": "^8.2.0",
+    "exceljs": "^4.4.0",
+    "pizzip": "^3.2.0",
+    "sql.js": "^1.10.0",
+    "xlsx": "^0.18.5"
+  },
+  "build": {
+    "appId": "com.zaru.smetaai",
+    "publish": null,
+    "productName": "SmetaAI",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "assets/**/*",
+      "node_modules/**/*",
+      "!**/generate-key*",
+      "!**/keygen*",
+      "!**/fix-*",
+      "!**/*.test.*",
+      "!**/*.spec.*"
+    ],
+    "asar": true,
+    "extraResources": [
+      {
+        "to": "renderer",
+        "from": "../frontend/dist"
+      },
+      {
+        "to": "templates",
+        "from": "templates"
+      },
+      {
+        "to": "db",
+        "from": "db"
+      },
+      {
+        "from": "../docs/client",
+        "to": "docs/client",
+        "filter": [
+          "**/*",
+          "!starter-db{,/**}"
+        ]
+      },
+      {
+        "from": "../docs/client/starter-db",
+        "to": "starter-db"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerLanguages": [
+        "ru"
+      ],
+      "language": "1049",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "SmetaAI"
+    },
+    "artifactName": "SmetaAI_Setup_${version}.exe",
+    "copyright": "Copyright 2026 ZARU"
+  }
+}

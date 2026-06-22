@@ -1,0 +1,17 @@
+{
+  "name": "zaru-smeta",
+  "version": "2.2.0",
+  "description": "ZARU Смета - Профессиональная сметная программа с ИИ",
+  "main": "main.js",
+  "author": "ZARU",
+  "license": "Commercial",
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "docxtemplater": "^3.67.6",
+    "electron-store": "^8.2.0",
+    "exceljs": "^4.4.0",
+    "pizzip": "^3.2.0",
+    "sql.js": "^1.10.0",
+    "xlsx": "^0.18.5"
+  }
+}

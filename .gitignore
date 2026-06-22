@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.spec
+.eggs/
+*.egg
+venv/
+.venv/
+.env
+
+# Node
+node_modules/
+
+# Database
+*.db
+*.accdb
+*.mdb
+*.ldb
+
+# Uploads
+uploads/*
+!uploads/.gitkeep
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Build artifacts
+release/
+desktop/dommaster-dist/
+desktop/build/
+desktop/dist/
+
+# Data
+data/
+*.json
+!**/package.json
+!**/tsconfig*.json
+!**/requirements.json

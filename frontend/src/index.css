@@ -1,0 +1,237 @@
+/* Локальные шрифты (без зависимости от интернета) */
+@import '@fontsource/inter/300.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 262 83% 58%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 262 83% 58%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 262 83% 58%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 262 83% 58%;
+  }
+
+  * {
+    @apply border-slate-200 dark:border-slate-700;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  /* Кнопки */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800;
+    @apply px-4 py-2;
+  }
+
+  .btn-secondary {
+    @apply btn bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700;
+    @apply px-4 py-2;
+  }
+
+  .btn-ghost {
+    @apply btn text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800;
+    @apply px-3 py-2;
+  }
+
+  .btn-danger {
+    @apply btn bg-red-600 text-white hover:bg-red-700;
+    @apply px-4 py-2;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1.5 text-sm;
+  }
+
+  .btn-lg {
+    @apply px-6 py-3 text-lg;
+  }
+
+  /* Карточки */
+  .card {
+    @apply bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700;
+    @apply shadow-sm hover:shadow-md transition-shadow duration-200;
+  }
+
+  .card-header {
+    @apply px-6 py-4 border-b border-slate-200 dark:border-slate-700;
+  }
+
+  .card-body {
+    @apply p-6;
+  }
+
+  /* Инпуты */
+  .input {
+    @apply w-full rounded-lg border border-slate-300 dark:border-slate-600;
+    @apply bg-white dark:bg-slate-800 px-4 py-2.5;
+    @apply text-slate-900 dark:text-slate-100;
+    @apply placeholder:text-slate-400 dark:placeholder:text-slate-500;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+    @apply transition-all duration-200;
+  }
+
+  .input-sm {
+    @apply px-3 py-2 text-sm;
+  }
+
+  .input-error {
+    @apply border-red-500 focus:ring-red-500;
+  }
+
+  /* Таблицы */
+  .table-container {
+    @apply overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700;
+  }
+
+  .table {
+    @apply w-full text-sm;
+  }
+
+  .table th {
+    @apply bg-slate-50 dark:bg-slate-800/50 px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300;
+    @apply border-b border-slate-200 dark:border-slate-700;
+  }
+
+  .table td {
+    @apply px-4 py-3 border-b border-slate-100 dark:border-slate-800;
+  }
+
+  .table tr:hover td {
+    @apply bg-slate-50 dark:bg-slate-800/30;
+  }
+
+  /* Сайдбар */
+  .sidebar {
+    @apply fixed left-0 top-0 h-screen w-64 bg-slate-900 text-white;
+    @apply flex flex-col z-50;
+  }
+
+  .sidebar-item {
+    @apply flex items-center gap-3 px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-800;
+    @apply transition-all duration-200 rounded-lg mx-2;
+  }
+
+  .sidebar-item.active {
+    @apply bg-primary-600 text-white;
+  }
+
+  /* Бейджи */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400;
+  }
+
+  .badge-warning {
+    @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400;
+  }
+
+  .badge-danger {
+    @apply bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400;
+  }
+
+  .badge-info {
+    @apply bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400;
+  }
+
+  /* ИИ Чат */
+  .ai-chat-bubble {
+    @apply max-w-[80%] rounded-2xl px-4 py-3;
+  }
+
+  .ai-chat-bubble.user {
+    @apply bg-primary-600 text-white ml-auto rounded-br-md;
+  }
+
+  .ai-chat-bubble.assistant {
+    @apply bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-bl-md;
+  }
+}
+
+@layer utilities {
+  /* Скрытие скроллбара */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Анимация загрузки */
+  .loading-dots::after {
+    content: '';
+    animation: dots 1.5s steps(4, end) infinite;
+  }
+
+  @keyframes dots {
+    0%, 20% { content: ''; }
+    40% { content: '.'; }
+    60% { content: '..'; }
+    80%, 100% { content: '...'; }
+  }
+
+  /* Градиент текста */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-500 to-accent-500;
+  }
+}

@@ -1,0 +1,21 @@
+{
+    "name": "avito-parser-pro",
+    "version": "1.0.0",
+    "description": "Professional Avito parser using Puppeteer",
+    "main": "parser.js",
+    "scripts": {
+        "start": "node parser.js"
+    },
+    "keywords": [
+        "avito",
+        "parser",
+        "puppeteer"
+    ],
+    "author": "Antigravity",
+    "license": "ISC",
+    "dependencies": {
+        "puppeteer": "^22.0.0",
+        "puppeteer-extra": "^3.3.6",
+        "puppeteer-extra-plugin-stealth": "^2.11.2"
+    }
+}

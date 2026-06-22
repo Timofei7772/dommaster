@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#22c55e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#10b981;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="url(#grad1)"/>
+  
+  <!-- Building icon -->
+  <g transform="translate(96, 80)">
+    <!-- Main building -->
+    <rect x="60" y="100" width="200" height="252" rx="8" fill="white" opacity="0.95"/>
+    
+    <!-- Roof -->
+    <path d="M40 120 L160 40 L280 120" stroke="white" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    
+    <!-- Windows row 1 -->
+    <rect x="90" y="140" width="40" height="40" rx="4" fill="url(#grad1)" opacity="0.8"/>
+    <rect x="150" y="140" width="40" height="40" rx="4" fill="url(#grad1)" opacity="0.8"/>
+    <rect x="210" y="140" width="40" height="40" rx="4" fill="url(#grad1)" opacity="0.8"/>
+    
+    <!-- Windows row 2 -->
+    <rect x="90" y="200" width="40" height="40" rx="4" fill="url(#grad1)" opacity="0.8"/>
+    <rect x="150" y="200" width="40" height="40" rx="4" fill="url(#grad1)" opacity="0.8"/>
+    <rect x="210" y="200" width="40" height="40" rx="4" fill="url(#grad1)" opacity="0.8"/>
+    
+    <!-- Door -->
+    <rect x="130" y="280" width="60" height="72" rx="4" fill="url(#grad2)"/>
+    <circle cx="175" cy="316" r="5" fill="white"/>
+  </g>
+  
+  <!-- Calculator symbol -->
+  <g transform="translate(340, 320)">
+    <rect x="0" y="0" width="80" height="100" rx="8" fill="white" opacity="0.95"/>
+    <rect x="10" y="10" width="60" height="20" rx="2" fill="url(#grad2)"/>
+    <rect x="10" y="40" width="15" height="15" rx="2" fill="url(#grad1)" opacity="0.6"/>
+    <rect x="32" y="40" width="15" height="15" rx="2" fill="url(#grad1)" opacity="0.6"/>
+    <rect x="54" y="40" width="15" height="15" rx="2" fill="url(#grad1)" opacity="0.6"/>
+    <rect x="10" y="62" width="15" height="15" rx="2" fill="url(#grad1)" opacity="0.6"/>
+    <rect x="32" y="62" width="15" height="15" rx="2" fill="url(#grad1)" opacity="0.6"/>
+    <rect x="54" y="62" width="15" height="30" rx="2" fill="url(#grad2)"/>
+    <rect x="10" y="84" width="37" height="8" rx="2" fill="url(#grad1)" opacity="0.6"/>
+  </g>
+</svg>
