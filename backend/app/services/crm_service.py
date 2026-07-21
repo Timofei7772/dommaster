@@ -102,6 +102,7 @@ class CrmService:
             user_id=user_id,
         )
         await self.session.flush()
+        await self.session.refresh(lead)
         return lead
 
     async def convert_lead(
@@ -176,6 +177,7 @@ class CrmService:
             user_id=user_id,
         )
         await self.session.flush()
+        await self.session.refresh(lead)
 
         return LeadConversionResult(
             lead=lead,
