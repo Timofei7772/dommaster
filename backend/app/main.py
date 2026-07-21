@@ -162,10 +162,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS для фронтенда
+# CORS для фронтенда + Electron
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173", "app://.*"],
+    allow_origin_regex="(http://localhost:[0-9]+|http://127\\.0\\.0\\.1:[0-9]+|app://.*|null)",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

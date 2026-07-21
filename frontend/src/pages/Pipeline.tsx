@@ -15,6 +15,12 @@ import { formatCurrency } from '@/lib/utils'
 import { DEAL_STAGES, DEAL_SOURCES, getStageInfo, getSourceInfo, getScriptForStage } from '@/data/sales_scripts'
 import { Link } from 'react-router-dom'
 import { toast } from '@/lib/toast'
+import {
+  apiDelete as requestDelete,
+  apiGet as requestGet,
+  apiPatch as requestPatch,
+  apiPost as requestPost,
+} from '@/lib/api-client'
 
 // ==================== TYPES ====================
 
@@ -68,37 +74,20 @@ interface PipelineStats {
 
 // ==================== API HELPERS ====================
 
-const API_BASE = 'http://localhost:8000/api/deals'
-
 async function apiGet<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`)
-  if (!res.ok) throw new Error(`API error: ${res.status}`)
-  return res.json()
+  return requestGet<T>(`/deals${path}`)
 }
 
 async function apiPost<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) throw new Error(`API error: ${res.status}`)
-  return res.json()
+  return requestPost<T>(`/deals${path}`, body)
 }
 
 async function apiPatch<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) throw new Error(`API error: ${res.status}`)
-  return res.json()
+  return requestPatch<T>(`/deals${path}`, body)
 }
 
 async function apiDelete(path: string): Promise<void> {
-  const res = await fetch(`${API_BASE}${path}`, { method: 'DELETE' })
-  if (!res.ok) throw new Error(`API error: ${res.status}`)
+  return requestDelete(`/deals${path}`)
 }
 
 // ==================== SUB-COMPONENTS ====================
@@ -406,7 +395,7 @@ function DealDetailModal({ deal, onClose, onUpdate, onMove, onLost, onDelete }: 
                   <button 
                      onClick={async () => {
                         try {
-                          const updated = await fetch(`http://localhost:8000/api/deals/${deal.id}`, {
+                          const updated = await fetch(`/api/deals/${deal.id}`, {
                             method: 'PATCH',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ next_action: null, next_action_date: null })

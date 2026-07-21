@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { buildBackendApiUrl } from './backendApi.ts'
+import { buildBackendApiUrl, buildRuntimeBackendApiUrl } from './backendApi.ts'
 
 test('buildBackendApiUrl uses localhost backend in desktop file protocol', () => {
   assert.equal(
@@ -31,4 +31,19 @@ test('buildBackendApiUrl keeps relative path for normal web mode', () => {
     }),
     '/api/payment/create',
   )
+})
+
+test('buildRuntimeBackendApiUrl asks Electron for the actual backend port', async () => {
+  let bridgeCalls = 0
+
+  const url = await buildRuntimeBackendApiUrl('/api/auth/auto-login', {
+    protocol: 'file:',
+    getElectronBackendUrl: async () => {
+      bridgeCalls += 1
+      return 'http://127.0.0.1:8123/'
+    },
+  })
+
+  assert.equal(bridgeCalls, 1)
+  assert.equal(url, 'http://127.0.0.1:8123/api/auth/auto-login')
 })

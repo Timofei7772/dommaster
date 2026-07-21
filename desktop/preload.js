@@ -303,7 +303,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getAll: (estimateId) => ipcRenderer.invoke('marginScenarios:getAll', estimateId),
     create: (data) => ipcRenderer.invoke('marginScenarios:create', data),
     calculate: (estimateId, scenarioId) => ipcRenderer.invoke('marginScenarios:calculate', estimateId, scenarioId)
-  }
+  },
+
+  // Backend
+  getBackendUrl: () => ipcRenderer.invoke('app:getBackendUrl')
 })
 
 // Флаг для определения Electron

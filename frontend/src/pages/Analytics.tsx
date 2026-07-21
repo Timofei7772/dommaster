@@ -8,6 +8,7 @@ import {
   BarChart,
 } from 'lucide-react'
 import { cn, formatCurrency } from '@/lib/utils'
+import { apiGet } from '@/lib/api-client'
 
 // ==================== TYPES ====================
 interface FunnelStage {
@@ -67,8 +68,6 @@ const STAGE_COLORS: Record<string, string> = {
 }
 
 // ==================== API ====================
-const API_BASE = 'http://localhost:8000/api/analytics'
-
 export default function Analytics() {
   const [data, setData] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -76,9 +75,7 @@ export default function Analytics() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`${API_BASE}/`)
-        if (!res.ok) throw new Error('API error')
-        const json = await res.json()
+        const json = await apiGet<AnalyticsData>('/analytics/')
         setData(json)
       } catch (e) {
         console.error('Failed to load analytics', e)

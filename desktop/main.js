@@ -32,6 +32,7 @@ const { ensureLogsDirectory, exportDiagnosticsBundle } = require('./src/main/dia
 const { generateDocumentPackage } = require('./src/main/document-package')
 const { createRuntimeLogger, installProcessDiagnostics, registerLoggedHandler } = require('./src/main/runtime-logger')
 const { runSystemSelfCheck } = require('./src/main/system-self-check')
+const { launchBackend, shutdownBackend, getBackendUrl } = require('./src/main/backend-launcher')
 
 let mainWindow
 const isDev = !app.isPackaged
@@ -1321,6 +1322,7 @@ ipcMain.handle('dialog:showOpenDialog', async (_, options) => {
 
 // Путь к данным
 ipcMain.handle('app:getDataPath', () => db.getDataPath())
+ipcMain.handle('app:getBackendUrl', () => global.__backendUrl || 'http://127.0.0.1:8000')
 
 
 // === IPC: Лицензирование ===
@@ -1554,7 +1556,7 @@ ipcMain.handle('marginScenarios:create', (_, data) => db.createMarginScenario(da
 ipcMain.handle('marginScenarios:calculate', (_, estimateId, scenarioId) => db.calculateScenario(estimateId, scenarioId))
 
 // === Запуск приложения ===
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   getRuntimeLogger()
   installProcessDiagnostics({ logger: getRuntimeLogger() })
 
@@ -1567,6 +1569,13 @@ app.whenReady().then(() => {
       callback(false);
     }
   });
+
+  // Запуск Python backend (в production)
+  const backend = await launchBackend(console)
+  if (backend && !backend.devMode && !backend.missing) {
+    global.__backendProcess = backend.process
+    global.__backendUrl = getBackendUrl()
+  }
 
   createWindow()
 
@@ -1595,6 +1604,7 @@ app.on('before-quit', () => {
 })
 
 app.on('will-quit', () => {
+  shutdownBackend()
   db.saveDatabase()
 })
 

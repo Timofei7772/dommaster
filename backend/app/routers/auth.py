@@ -2,16 +2,19 @@
 Роутер аутентификации пользователей и управления JWT сессиями
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
-from passlib.context import CryptContext
-from pydantic import BaseModel, EmailStr, Field
+import bcrypt
+from pydantic import ConfigDict, BaseModel, EmailStr, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
+import os
+import re
 
 from app.config import settings
 from app.database import get_db
@@ -20,23 +23,25 @@ from app.models.company import Company
 
 router = APIRouter()
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 
 
 # --- Вспомогательные функции безопасности ---
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
+    except ValueError:
+        return False
 
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def create_token(data: dict, expires_delta: timedelta) -> str:
     to_encode = data.copy()
-    expire = datetime.utcnow() + expires_delta
+    expire = datetime.now(timezone.utc) + expires_delta
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
@@ -73,11 +78,29 @@ async def get_current_user(
 
 class UserRegisterRequest(BaseModel):
     email: EmailStr
-    password: str = Field(..., min_length=6, description="Минимум 6 символов")
+    password: str = Field(..., min_length=8, max_length=128, description="Минимум 8 символов")
     full_name: str = Field(..., min_length=1, max_length=200)
     phone: Optional[str] = None
     role: UserRole = UserRole.OWNER
     company_name: Optional[str] = Field(None, description="Название компании для роли OWNER")
+
+    @field_validator("password")
+    @classmethod
+    def password_complexity(cls, v: str) -> str:
+        if not re.search(r"[A-ZА-Я]", v):
+            raise ValueError("Пароль должен содержать заглавную букву")
+        if not re.search(r"[a-zа-я]", v):
+            raise ValueError("Пароль должен содержать строчную букву")
+        if not re.search(r"\d", v):
+            raise ValueError("Пароль должен содержать цифру")
+        return v
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v: Optional[str]) -> Optional[str]:
+        if v and not re.match(r"^\+?[\d\s\-\(\)]{7,20}$", v):
+            raise ValueError("Неверный формат телефона")
+        return v
 
 
 class UserLoginRequest(BaseModel):
@@ -95,8 +118,7 @@ class CompanyResponse(BaseModel):
     logo: Optional[str] = None
     bank_details: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserProfileResponse(BaseModel):
@@ -109,8 +131,7 @@ class UserProfileResponse(BaseModel):
     company_id: Optional[int] = None
     company: Optional[CompanyResponse] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TokenResponse(BaseModel):
@@ -163,7 +184,14 @@ async def register(data: UserRegisterRequest, db: AsyncSession = Depends(get_db)
     refresh_token = create_token({"sub": new_user.email, "type": "refresh"}, refresh_token_expires)
 
     new_user.refresh_token = refresh_token
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Пользователь с таким email уже зарегистрирован",
+        )
 
     # Загружаем связи для ответа
     result = await db.execute(
@@ -189,22 +217,22 @@ async def login(data: UserLoginRequest, db: AsyncSession = Depends(get_db)):
         .options(selectinload(User.company))
     )
     user = result.scalar_one_or_none()
-    
+
     if not user or not verify_password(data.password, user.hashed_password):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Неверный email или пароль"
         )
 
     # Генерируем токены
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     refresh_token_expires = timedelta(days=30)
-    
+
     access_token = create_token({"sub": user.email}, access_token_expires)
     refresh_token = create_token({"sub": user.email, "type": "refresh"}, refresh_token_expires)
 
     user.refresh_token = refresh_token
-    user.last_login = datetime.utcnow()
+    user.last_login = datetime.now(timezone.utc)
     await db.commit()
 
     return {
@@ -256,3 +284,66 @@ async def refresh(data: RefreshTokenRequest, db: AsyncSession = Depends(get_db))
 async def get_me(current_user: User = Depends(get_current_user)):
     """Получение профиля текущего пользователя"""
     return current_user
+
+
+# --- Локальный режим (без регистрации) ---
+
+async def get_or_create_local_user(db: AsyncSession) -> User:
+    """Создаёт/возвращает локального пользователя."""
+    result = await db.execute(
+        select(User).where(User.email == "local@dommaster.local").options(selectinload(User.company))
+    )
+    user = result.scalar_one_or_none()
+    if user:
+        return user
+
+    # Создаём компанию
+    company = Company(name="DomMaster Локальная")
+    db.add(company)
+    await db.flush()
+
+    user = User(
+        email="local@dommaster.local",
+        hashed_password=get_password_hash("local"),
+        full_name="Локальный пользователь",
+        role=UserRole.OWNER,
+        company_id=company.id,
+        position="Владелец",
+        is_active=True,
+    )
+    db.add(user)
+    await db.flush()
+    return user
+
+
+@router.post("/auto-login", response_model=TokenResponse)
+async def auto_login(request: Request, db: AsyncSession = Depends(get_db)):
+    """Автоматический вход только для встроенного локального desktop backend."""
+    desktop_local_mode = os.getenv("SMETAAI_DESKTOP_LOCAL_MODE") == "1"
+    client_host = request.client.host if request.client else None
+    is_loopback = client_host in {"127.0.0.1", "::1", "testclient"}
+
+    if not settings.DEBUG and not (desktop_local_mode and is_loopback):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not available")
+    user = await get_or_create_local_user(db)
+
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    refresh_token_expires = timedelta(days=365)
+
+    access_token = create_token({"sub": user.email}, access_token_expires)
+    refresh_token = create_token({"sub": user.email, "type": "refresh"}, refresh_token_expires)
+
+    user.refresh_token = refresh_token
+    await db.commit()
+
+    # Перезагружаем с компанией
+    result = await db.execute(
+        select(User).where(User.id == user.id).options(selectinload(User.company))
+    )
+    user_loaded = result.scalar_one()
+
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "user": user_loaded,
+    }

@@ -1,10 +1,11 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useThemeStore } from '@/store/theme'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Layout from '@/components/Layout'
 import Onboarding from '@/components/Onboarding'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import { initAutoBackup } from '@/lib/backup'
+import { autoLogin } from '@/lib/api-client'
 
 // CRM & Auth Pages
 import Login from '@/pages/Login'
@@ -59,10 +60,19 @@ import { useGlobalHotkeys } from '@/lib/useHotkeys'
 
 // Защита авторизацией
 function AuthGuard({ children }: { children: React.ReactNode }) {
-  const token = localStorage.getItem('access_token')
-  if (!token) {
-    return <Navigate to="/login" replace />
-  }
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    const token = localStorage.getItem('access_token')
+    if (token) { setReady(true); return }
+    autoLogin().finally(() => setReady(true))
+  }, [])
+
+  if (!ready) return (
+    <div className="flex items-center justify-center min-h-screen bg-slate-950">
+      <p className="text-slate-400">Загрузка...</p>
+    </div>
+  )
   return <>{children}</>
 }
 

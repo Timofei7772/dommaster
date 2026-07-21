@@ -1,6 +1,6 @@
 {
   "name": "smetaai-desktop",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "SmetaAI - коммерческая сметная программа с лицензированием",
   "main": "main.js",
   "scripts": {
@@ -57,6 +57,10 @@
       {
         "to": "renderer",
         "from": "../frontend/dist"
+      },
+      {
+        "to": "backend/dommaster-server.exe",
+        "from": "../backend/dist/dommaster-server.exe"
       },
       {
         "to": "templates",
