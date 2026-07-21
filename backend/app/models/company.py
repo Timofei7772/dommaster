@@ -22,3 +22,5 @@ class Company(Base):
     # Связи
     users = relationship("User", back_populates="company", cascade="all, delete-orphan")
     projects = relationship("Project", back_populates="company")
+    clients = relationship("Client", back_populates="company_owner")
+    leads = relationship("Lead", back_populates="company", cascade="all, delete-orphan")

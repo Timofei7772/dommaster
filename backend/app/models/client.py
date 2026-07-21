@@ -2,7 +2,7 @@
 Модель клиентов
 """
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -14,6 +14,7 @@ class Client(Base):
     __tablename__ = "clients"
 
     id = Column(Integer, primary_key=True, index=True)
+    company_id = Column(Integer, ForeignKey("companies.id"), nullable=False, index=True)
 
     # Основная информация
     name = Column(String(500), nullable=False, index=True, comment="ФИО / Название компании")
@@ -54,4 +55,6 @@ class Client(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Связи
+    company_owner = relationship("Company", back_populates="clients")
     projects = relationship("Project", back_populates="client")
+    source_leads = relationship("Lead", back_populates="client")

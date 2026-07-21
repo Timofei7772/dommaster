@@ -54,3 +54,8 @@ class User(Base):
 
     # Связи
     company = relationship("Company", back_populates="users")
+    assigned_leads = relationship(
+        "Lead",
+        foreign_keys="Lead.assigned_to",
+        back_populates="manager",
+    )
