@@ -2,7 +2,7 @@
 
 import re
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.client import Client
@@ -48,6 +48,36 @@ class ClientRepository:
             )
         )
         return result.scalar_one_or_none()
+
+    async def list(
+        self,
+        *,
+        company_id: int,
+        search: str | None = None,
+        client_type: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[Client]:
+        query = select(Client).where(
+            Client.company_id == company_id,
+            Client.is_active.is_(True),
+        )
+        if search:
+            pattern = f"%{search}%"
+            query = query.where(
+                or_(
+                    Client.name.ilike(pattern),
+                    Client.company.ilike(pattern),
+                )
+            )
+        if client_type:
+            query = query.where(Client.client_type == client_type)
+        result = await self.session.execute(
+            query.order_by(Client.created_at.desc(), Client.id.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        return list(result.scalars().all())
 
     async def find_match(
         self,
