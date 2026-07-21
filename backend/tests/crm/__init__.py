@@ -1,0 +1,1 @@
+"""CRM foundation tests."""
