@@ -4,7 +4,12 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
-from app.models.document_workflow import EstimateRevision
+from app.models.contract import Contract
+from app.models.document_workflow import (
+    DocumentAuditEvent,
+    DocumentSnapshot,
+    EstimateRevision,
+)
 from app.models.estimate import Estimate
 from app.models.project import Project
 
@@ -65,3 +70,52 @@ class DocumentWorkflowRepository:
         self.session.add(revision)
         await self.session.flush()
         return revision
+
+    async def get_revision(
+        self,
+        *,
+        revision_id: int,
+        company_id: int,
+    ) -> EstimateRevision | None:
+        result = await self.session.execute(
+            select(EstimateRevision).where(
+                EstimateRevision.id == revision_id,
+                EstimateRevision.company_id == company_id,
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def get_snapshot_by_idempotency_key(
+        self,
+        *,
+        company_id: int,
+        idempotency_key: str,
+    ) -> DocumentSnapshot | None:
+        result = await self.session.execute(
+            select(DocumentSnapshot).where(
+                DocumentSnapshot.company_id == company_id,
+                DocumentSnapshot.idempotency_key == idempotency_key,
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def get_contract(self, contract_id: int) -> Contract | None:
+        return await self.session.get(Contract, contract_id)
+
+    async def create_contract(self, **data) -> Contract:
+        contract = Contract(**data)
+        self.session.add(contract)
+        await self.session.flush()
+        return contract
+
+    async def create_snapshot(self, **data) -> DocumentSnapshot:
+        snapshot = DocumentSnapshot(**data)
+        self.session.add(snapshot)
+        await self.session.flush()
+        return snapshot
+
+    async def create_audit_event(self, **data) -> DocumentAuditEvent:
+        event = DocumentAuditEvent(**data)
+        self.session.add(event)
+        await self.session.flush()
+        return event

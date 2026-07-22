@@ -158,9 +158,12 @@ class SnapshotService:
                 "customer": {
                     "id": client.id if client else None,
                     "name": client.name if client else project.customer_name,
+                    "client_type": client.client_type if client else None,
                     "inn": client.inn if client else None,
                     "kpp": client.kpp if client else None,
                     "legal_address": client.legal_address if client else None,
+                    "phone": client.phone if client else project.customer_contact,
+                    "email": client.email if client else None,
                     "bank_name": client.bank_name if client else None,
                     "bik": client.bik if client else None,
                     "checking_account": client.checking_account if client else None,
