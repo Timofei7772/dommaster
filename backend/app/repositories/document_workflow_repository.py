@@ -11,6 +11,7 @@ from app.models.document_workflow import (
     EstimateRevision,
 )
 from app.models.estimate import Estimate
+from app.models.ks2 import KS2Act, KS2Item
 from app.models.project import Project
 
 
@@ -119,3 +120,119 @@ class DocumentWorkflowRepository:
         self.session.add(event)
         await self.session.flush()
         return event
+
+    async def get_contract_snapshot(
+        self,
+        *,
+        contract_id: int,
+        revision_id: int,
+        company_id: int,
+    ) -> DocumentSnapshot | None:
+        result = await self.session.execute(
+            select(DocumentSnapshot).where(
+                DocumentSnapshot.document_type == "contract",
+                DocumentSnapshot.entity_id == contract_id,
+                DocumentSnapshot.estimate_revision_id == revision_id,
+                DocumentSnapshot.company_id == company_id,
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def get_ks2(self, ks2_id: int) -> KS2Act | None:
+        result = await self.session.execute(
+            select(KS2Act)
+            .where(KS2Act.id == ks2_id)
+            .options(selectinload(KS2Act.items))
+        )
+        return result.scalar_one_or_none()
+
+    async def get_company_ks2(
+        self,
+        *,
+        ks2_id: int,
+        company_id: int,
+    ) -> KS2Act | None:
+        result = await self.session.execute(
+            select(KS2Act)
+            .join(DocumentSnapshot, DocumentSnapshot.entity_id == KS2Act.id)
+            .where(
+                KS2Act.id == ks2_id,
+                DocumentSnapshot.document_type == "ks2",
+                DocumentSnapshot.company_id == company_id,
+            )
+            .options(selectinload(KS2Act.items))
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
+
+    async def get_document_snapshot(
+        self,
+        *,
+        document_type: str,
+        entity_id: int,
+        status: str | None = None,
+    ) -> DocumentSnapshot | None:
+        query = select(DocumentSnapshot).where(
+            DocumentSnapshot.document_type == document_type,
+            DocumentSnapshot.entity_id == entity_id,
+        )
+        if status is not None:
+            query = query.where(DocumentSnapshot.status == status)
+        result = await self.session.execute(
+            query.order_by(DocumentSnapshot.version.desc()).limit(1)
+        )
+        return result.scalar_one_or_none()
+
+    async def next_snapshot_version(
+        self,
+        *,
+        document_type: str,
+        entity_id: int,
+    ) -> int:
+        result = await self.session.execute(
+            select(func.max(DocumentSnapshot.version)).where(
+                DocumentSnapshot.document_type == document_type,
+                DocumentSnapshot.entity_id == entity_id,
+            )
+        )
+        return int(result.scalar_one_or_none() or 0) + 1
+
+    async def get_signed_ks2_quantities(
+        self,
+        *,
+        revision_id: int,
+        company_id: int,
+        exclude_ks2_id: int | None = None,
+    ) -> dict[int, float]:
+        query = (
+            select(KS2Item.estimate_item_id, func.sum(KS2Item.quantity_done))
+            .join(KS2Act, KS2Act.id == KS2Item.act_id)
+            .join(DocumentSnapshot, DocumentSnapshot.entity_id == KS2Act.id)
+            .where(
+                DocumentSnapshot.document_type == "ks2",
+                DocumentSnapshot.status == "signed",
+                DocumentSnapshot.estimate_revision_id == revision_id,
+                DocumentSnapshot.company_id == company_id,
+            )
+            .group_by(KS2Item.estimate_item_id)
+        )
+        if exclude_ks2_id is not None:
+            query = query.where(KS2Act.id != exclude_ks2_id)
+        result = await self.session.execute(query)
+        return {
+            int(source_row_id): float(quantity or 0)
+            for source_row_id, quantity in result.all()
+            if source_row_id is not None
+        }
+
+    async def create_ks2(self, **data) -> KS2Act:
+        act = KS2Act(**data)
+        self.session.add(act)
+        await self.session.flush()
+        return act
+
+    async def create_ks2_item(self, **data) -> KS2Item:
+        item = KS2Item(**data)
+        self.session.add(item)
+        await self.session.flush()
+        return item

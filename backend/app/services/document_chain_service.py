@@ -2,11 +2,13 @@
 
 import hashlib
 import json
-from decimal import Decimal
+from datetime import datetime, timezone
+from decimal import Decimal, ROUND_HALF_UP
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.contract import ContractStatus, ContractType
+from app.models.ks2 import KS2Status
 from app.repositories.document_workflow_repository import (
     DocumentWorkflowRepository,
 )
@@ -28,6 +30,10 @@ class DocumentChainIdempotencyConflictError(DocumentChainError):
     """Raised when an idempotency key is reused for another command."""
 
 
+class InvalidDocumentQuantityError(DocumentChainError):
+    """Raised when executed quantity is invalid or exceeds the approved source."""
+
+
 def _canonical_hash(payload: dict) -> str:
     serialized = json.dumps(
         payload,
@@ -43,6 +49,13 @@ def _number(value) -> str:
     if decimal_value == 0:
         return "0"
     return format(decimal_value.normalize(), "f")
+
+
+def _money(value) -> Decimal:
+    return Decimal(str(value if value is not None else 0)).quantize(
+        Decimal("0.01"),
+        rounding=ROUND_HALF_UP,
+    )
 
 
 class DocumentChainService:
@@ -194,6 +207,302 @@ class DocumentChainService:
             reason="Created from approved estimate revision",
         )
         return contract
+
+    async def create_ks2(
+        self,
+        *,
+        estimate_revision_id: int,
+        contract_id: int,
+        company_id: int,
+        actor_id: int | None,
+        act_data: dict,
+        rows: list[dict],
+        idempotency_key: str,
+    ):
+        existing = await self.repository.get_snapshot_by_idempotency_key(
+            company_id=company_id,
+            idempotency_key=idempotency_key,
+        )
+        if existing is not None:
+            if (
+                existing.document_type != "ks2"
+                or existing.estimate_revision_id != estimate_revision_id
+            ):
+                raise DocumentChainIdempotencyConflictError(
+                    "Idempotency key belongs to another document command"
+                )
+            act = await self.repository.get_ks2(existing.entity_id)
+            if act is None:
+                raise DocumentChainNotFoundError("Idempotent KS-2 record is missing")
+            return act
+
+        revision = await self.repository.get_revision(
+            revision_id=estimate_revision_id,
+            company_id=company_id,
+        )
+        if revision is None:
+            raise DocumentChainNotFoundError(
+                f"Estimate revision {estimate_revision_id} was not found"
+            )
+        source = revision.payload_json
+        if (
+            source.get("estimate", {}).get("status") != "approved"
+            or _canonical_hash(source) != revision.payload_hash
+        ):
+            raise InvalidSourceRevisionError("KS-2 requires an intact approved revision")
+        contract_snapshot = await self.repository.get_contract_snapshot(
+            contract_id=contract_id,
+            revision_id=revision.id,
+            company_id=company_id,
+        )
+        if contract_snapshot is None:
+            raise DocumentChainNotFoundError(
+                "Contract does not belong to the approved revision"
+            )
+        if not rows:
+            raise InvalidDocumentQuantityError("KS-2 requires at least one row")
+
+        source_rows = {row["source_id"]: row for row in source["rows"]}
+        if len({row["source_row_id"] for row in rows}) != len(rows):
+            raise InvalidDocumentQuantityError("Duplicate KS-2 source rows")
+        prior = await self.repository.get_signed_ks2_quantities(
+            revision_id=revision.id,
+            company_id=company_id,
+        )
+        prepared_rows = []
+        for selection in rows:
+            source_row_id = selection["source_row_id"]
+            source_row = source_rows.get(source_row_id)
+            if source_row is None:
+                raise InvalidDocumentQuantityError(
+                    f"Row {source_row_id} is absent from the approved revision"
+                )
+            quantity_done = Decimal(str(selection["quantity_done"]))
+            quantity_total = Decimal(source_row["quantity"])
+            quantity_prev = Decimal(str(prior.get(source_row_id, 0)))
+            if quantity_done <= 0:
+                raise InvalidDocumentQuantityError("Executed quantity must be positive")
+            if quantity_done + quantity_prev > quantity_total:
+                raise InvalidDocumentQuantityError(
+                    f"Executed quantity exceeds remaining quantity for row {source_row_id}"
+                )
+            if quantity_total <= 0:
+                raise InvalidDocumentQuantityError("Approved row quantity must be positive")
+            unit_price = Decimal(source_row["total"]) / quantity_total
+            line_total = _money(quantity_done * unit_price)
+            prepared_rows.append((source_row, quantity_done, quantity_prev, unit_price, line_total))
+
+        total_without_vat = _money(sum((row[4] for row in prepared_rows), Decimal("0")))
+        vat_percent = Decimal(source["vat"]["percent"])
+        vat_amount = (
+            _money(total_without_vat * vat_percent / Decimal("100"))
+            if source["vat"]["on_top"]
+            else Decimal("0")
+        )
+        total_with_vat = _money(total_without_vat + vat_amount)
+        parties = source["parties"]
+        project_object = source["object"]
+        act = await self.repository.create_ks2(
+            number=act_data["number"],
+            act_date=act_data["act_date"],
+            period_start=act_data["period_start"],
+            period_end=act_data["period_end"],
+            estimate_id=revision.estimate_id,
+            contract_id=contract_id,
+            customer=parties["customer"]["name"],
+            contractor=parties["contractor"]["name"],
+            investor=act_data.get("investor"),
+            object_name=project_object.get("name"),
+            object_address=project_object.get("address"),
+            total_without_vat=float(total_without_vat),
+            vat_amount=float(vat_amount),
+            total_with_vat=float(total_with_vat),
+            status=KS2Status.DRAFT,
+        )
+        for order_index, prepared in enumerate(prepared_rows, 1):
+            source_row, done, previous, unit_price, line_total = prepared
+            await self.repository.create_ks2_item(
+                act_id=act.id,
+                estimate_item_id=source_row["source_id"],
+                item_number=source_row.get("item_number"),
+                order_index=order_index,
+                justification=source_row.get("justification"),
+                name=source_row["name"],
+                unit=source_row.get("unit"),
+                quantity_total=float(Decimal(source_row["quantity"])),
+                quantity_done=float(done),
+                quantity_prev=float(previous),
+                unit_price=float(unit_price),
+                total=float(line_total),
+            )
+        act = await self.repository.get_ks2(act.id)
+        snapshot_payload = self._ks2_payload(
+            act=act,
+            revision=revision,
+            status=KS2Status.DRAFT.value,
+        )
+        snapshot = await self.repository.create_snapshot(
+            company_id=company_id,
+            project_id=source["project"]["id"],
+            estimate_revision_id=revision.id,
+            document_type="ks2",
+            entity_id=act.id,
+            version=1,
+            status=KS2Status.DRAFT.value,
+            payload_json=snapshot_payload,
+            payload_hash=_canonical_hash(snapshot_payload),
+            template_version="ks2.v1",
+            idempotency_key=idempotency_key,
+            created_by=actor_id,
+        )
+        await self.repository.create_audit_event(
+            snapshot_id=snapshot.id,
+            company_id=company_id,
+            actor_id=actor_id,
+            previous_status=None,
+            new_status=KS2Status.DRAFT.value,
+            reason="Created from approved estimate revision",
+        )
+        return act
+
+    async def approve_ks2(
+        self,
+        *,
+        ks2_id: int,
+        company_id: int,
+        actor_id: int | None,
+        idempotency_key: str,
+    ):
+        existing = await self.repository.get_snapshot_by_idempotency_key(
+            company_id=company_id,
+            idempotency_key=idempotency_key,
+        )
+        if existing is not None:
+            if existing.document_type != "ks2" or existing.entity_id != ks2_id:
+                raise DocumentChainIdempotencyConflictError(
+                    "Idempotency key belongs to another document command"
+                )
+            act = await self.repository.get_company_ks2(
+                ks2_id=ks2_id,
+                company_id=company_id,
+            )
+            if act is None:
+                raise DocumentChainNotFoundError("KS-2 was not found")
+            return act
+
+        act = await self.repository.get_company_ks2(
+            ks2_id=ks2_id,
+            company_id=company_id,
+        )
+        draft_snapshot = await self.repository.get_document_snapshot(
+            document_type="ks2",
+            entity_id=ks2_id,
+            status=KS2Status.DRAFT.value,
+        )
+        if act is None or draft_snapshot is None:
+            raise DocumentChainNotFoundError(f"KS-2 {ks2_id} was not found")
+        if act.status == KS2Status.SIGNED:
+            return act
+        revision = await self.repository.get_revision(
+            revision_id=draft_snapshot.estimate_revision_id,
+            company_id=company_id,
+        )
+        if revision is None:
+            raise DocumentChainNotFoundError("Approved source revision was not found")
+        source_rows = {
+            row["source_id"]: row
+            for row in revision.payload_json["rows"]
+        }
+        prior = await self.repository.get_signed_ks2_quantities(
+            revision_id=revision.id,
+            company_id=company_id,
+            exclude_ks2_id=act.id,
+        )
+        for item in act.items:
+            source_row = source_rows[item.estimate_item_id]
+            previous = Decimal(str(prior.get(item.estimate_item_id, 0)))
+            done = Decimal(str(item.quantity_done))
+            total = Decimal(source_row["quantity"])
+            if done <= 0 or done + previous > total:
+                raise InvalidDocumentQuantityError(
+                    f"Executed quantity exceeds remaining quantity for row {item.estimate_item_id}"
+                )
+            item.quantity_prev = float(previous)
+
+        act.status = KS2Status.SIGNED
+        act.signed_at = datetime.now(timezone.utc)
+        await self.session.flush()
+        signed_payload = self._ks2_payload(
+            act=act,
+            revision=revision,
+            status=KS2Status.SIGNED.value,
+        )
+        signed_snapshot = await self.repository.create_snapshot(
+            company_id=company_id,
+            project_id=revision.payload_json["project"]["id"],
+            estimate_revision_id=revision.id,
+            document_type="ks2",
+            entity_id=act.id,
+            version=await self.repository.next_snapshot_version(
+                document_type="ks2",
+                entity_id=act.id,
+            ),
+            status=KS2Status.SIGNED.value,
+            payload_json=signed_payload,
+            payload_hash=_canonical_hash(signed_payload),
+            template_version="ks2.v1",
+            idempotency_key=idempotency_key,
+            created_by=actor_id,
+        )
+        await self.repository.create_audit_event(
+            snapshot_id=signed_snapshot.id,
+            company_id=company_id,
+            actor_id=actor_id,
+            previous_status=KS2Status.DRAFT.value,
+            new_status=KS2Status.SIGNED.value,
+            reason="KS-2 approved after remaining-quantity validation",
+        )
+        return act
+
+    @staticmethod
+    def _ks2_payload(*, act, revision, status: str) -> dict:
+        return {
+            "schema_version": "ks2-snapshot.v1",
+            "source": {
+                "estimate_revision_id": revision.id,
+                "estimate_revision_hash": revision.payload_hash,
+                "contract_id": act.contract_id,
+            },
+            "ks2": {
+                "id": act.id,
+                "number": act.number,
+                "act_date": act.act_date.isoformat(),
+                "period_start": act.period_start.isoformat(),
+                "period_end": act.period_end.isoformat(),
+                "status": status,
+                "customer": act.customer,
+                "contractor": act.contractor,
+                "object_name": act.object_name,
+                "object_address": act.object_address,
+                "total_without_vat": _number(act.total_without_vat),
+                "vat_amount": _number(act.vat_amount),
+                "total_with_vat": _number(act.total_with_vat),
+                "rows": [
+                    {
+                        "source_row_id": item.estimate_item_id,
+                        "item_number": item.item_number,
+                        "name": item.name,
+                        "unit": item.unit,
+                        "quantity_total": _number(item.quantity_total),
+                        "quantity_prev": _number(item.quantity_prev),
+                        "quantity_done": _number(item.quantity_done),
+                        "unit_price": _number(item.unit_price),
+                        "total": _number(item.total),
+                    }
+                    for item in sorted(act.items, key=lambda value: value.order_index)
+                ],
+            },
+        }
 
     @staticmethod
     def _resolve_contract_type(value, customer: dict) -> ContractType:
