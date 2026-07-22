@@ -8,7 +8,7 @@ from app.services.document_chain_service import DocumentChainService
 from app.services.snapshot_service import SnapshotService
 
 
-async def seed_document_chain(db_session, *, suffix="1"):
+async def seed_document_chain(db_session, *, suffix="1", create_chain=True):
     company = Company(name=f"Генподрядчик {suffix}", bank_details="р/с подрядчика")
     client = Client(
         company_owner=company,
@@ -80,6 +80,16 @@ async def seed_document_chain(db_session, *, suffix="1"):
     db_session.add_all([work, material])
     await db_session.flush()
 
+    result = {
+        "company": company,
+        "project": project,
+        "estimate": estimate,
+        "work_row_id": work.id,
+        "material_row_id": material.id,
+    }
+    if not create_chain:
+        return result
+
     revision = await SnapshotService(db_session).approve_estimate(
         estimate_id=estimate.id,
         company_id=company.id,
@@ -97,11 +107,7 @@ async def seed_document_chain(db_session, *, suffix="1"):
         idempotency_key=f"contract-chain-{suffix}",
     )
     return {
-        "company": company,
-        "project": project,
-        "estimate": estimate,
+        **result,
         "revision": revision,
         "contract": contract,
-        "work_row_id": work.id,
-        "material_row_id": material.id,
     }

@@ -823,6 +823,7 @@ class DocumentChainService:
                 {
                     "id": revision.id,
                     "revision_number": revision.revision_number,
+                    "payload_json": revision.payload_json,
                     "payload_hash": revision.payload_hash,
                     "approved_at": revision.approved_at,
                     "created_at": revision.created_at,
