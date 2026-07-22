@@ -641,6 +641,159 @@ class DocumentChainService:
         )
         return certificate
 
+    async def create_m29(
+        self,
+        *,
+        estimate_revision_id: int,
+        project_id: int,
+        company_id: int,
+        actor_id: int | None,
+        report_data: dict,
+        rows: list[dict],
+        idempotency_key: str,
+    ):
+        existing = await self.repository.get_snapshot_by_idempotency_key(
+            company_id=company_id,
+            idempotency_key=idempotency_key,
+        )
+        if existing is not None:
+            if (
+                existing.document_type != "m29"
+                or existing.estimate_revision_id != estimate_revision_id
+                or existing.project_id != project_id
+            ):
+                raise DocumentChainIdempotencyConflictError(
+                    "Idempotency key belongs to another document command"
+                )
+            report = await self.repository.get_m29(existing.entity_id)
+            if report is None:
+                raise DocumentChainNotFoundError("Idempotent M-29 record is missing")
+            return report
+
+        revision = await self.repository.get_revision(
+            revision_id=estimate_revision_id,
+            company_id=company_id,
+        )
+        if revision is None:
+            raise DocumentChainNotFoundError(
+                f"Estimate revision {estimate_revision_id} was not found"
+            )
+        source = revision.payload_json
+        if source["project"]["id"] != project_id:
+            raise DocumentChainNotFoundError(
+                "Project does not belong to the approved estimate revision"
+            )
+        if (
+            source.get("estimate", {}).get("status") != "approved"
+            or _canonical_hash(source) != revision.payload_hash
+        ):
+            raise InvalidSourceRevisionError("M-29 requires an intact approved revision")
+
+        material_rows = [
+            row
+            for row in source["rows"]
+            if row.get("row_type") in {"mat", "material"}
+        ]
+        actual_by_source = {
+            row["source_row_id"]: row
+            for row in rows
+            if row.get("source_row_id") in {
+                material["source_id"] for material in material_rows
+            }
+        }
+        snapshot_rows = []
+        total_norm_cost = Decimal("0")
+        total_actual_cost = Decimal("0")
+        for material in material_rows:
+            actual = actual_by_source.get(material["source_id"], {})
+            actual_quantity = Decimal(str(actual.get("actual_quantity", 0)))
+            actual_cost = _money(actual.get("actual_cost", 0))
+            if actual_quantity < 0 or actual_cost < 0:
+                raise InvalidDocumentQuantityError(
+                    "M-29 actual quantity and cost cannot be negative"
+                )
+            normative_quantity = Decimal(material["quantity"])
+            normative_cost = _money(material["total"])
+            total_norm_cost += normative_cost
+            total_actual_cost += actual_cost
+            snapshot_rows.append({
+                "source_row_id": material["source_id"],
+                "item_number": material.get("item_number"),
+                "name": material["name"],
+                "unit": material.get("unit"),
+                "normative_quantity": _number(normative_quantity),
+                "normative_cost": _number(normative_cost),
+                "actual_quantity": _number(actual_quantity),
+                "actual_cost": _number(actual_cost),
+                "quantity_deviation": _number(actual_quantity - normative_quantity),
+                "cost_deviation": _number(actual_cost - normative_cost),
+                "deviation_reason": actual.get("deviation_reason"),
+            })
+
+        total_norm_cost = _money(total_norm_cost)
+        total_actual_cost = _money(total_actual_cost)
+        report = await self.repository.create_m29(
+            report_number=report_data["report_number"],
+            report_date=report_data["report_date"],
+            project_id=project_id,
+            period_start=report_data.get("period_start"),
+            period_end=report_data.get("period_end"),
+            responsible_name=report_data.get("responsible_name"),
+            total_norm_cost=float(total_norm_cost),
+            total_actual_cost=float(total_actual_cost),
+            status="draft",
+            notes=report_data.get("notes"),
+        )
+        snapshot_payload = {
+            "schema_version": "m29-snapshot.v1",
+            "source": {
+                "estimate_revision_id": revision.id,
+                "estimate_revision_hash": revision.payload_hash,
+                "project_id": project_id,
+            },
+            "m29": {
+                "id": report.id,
+                "report_number": report.report_number,
+                "report_date": report.report_date.isoformat(),
+                "period_start": (
+                    report.period_start.isoformat() if report.period_start else None
+                ),
+                "period_end": (
+                    report.period_end.isoformat() if report.period_end else None
+                ),
+                "responsible_name": report.responsible_name,
+                "status": report.status,
+                "total_norm_cost": _number(total_norm_cost),
+                "total_actual_cost": _number(total_actual_cost),
+                "cost_deviation": _number(total_actual_cost - total_norm_cost),
+                "notes": report.notes,
+                "rows": snapshot_rows,
+            },
+        }
+        snapshot = await self.repository.create_snapshot(
+            company_id=company_id,
+            project_id=project_id,
+            estimate_revision_id=revision.id,
+            document_type="m29",
+            entity_id=report.id,
+            version=1,
+            status="draft",
+            payload_json=snapshot_payload,
+            payload_hash=_canonical_hash(snapshot_payload),
+            template_version="m29.v1",
+            idempotency_key=idempotency_key,
+            created_by=actor_id,
+        )
+        await self.repository.create_audit_event(
+            snapshot_id=snapshot.id,
+            company_id=company_id,
+            actor_id=actor_id,
+            previous_status=None,
+            new_status="draft",
+            reason="Created from material rows of approved estimate revision",
+        )
+        return report
+
     @staticmethod
     def _ks2_payload(*, act, revision, status: str) -> dict:
         return {

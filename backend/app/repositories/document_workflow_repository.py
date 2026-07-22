@@ -13,6 +13,7 @@ from app.models.document_workflow import (
 from app.models.estimate import Estimate
 from app.models.ks2 import KS2Act, KS2Item
 from app.models.ks3 import KS3Certificate, KS3Item
+from app.models.m29_report import M29Report
 from app.models.project import Project
 
 
@@ -318,3 +319,12 @@ class DocumentWorkflowRepository:
         self.session.add(item)
         await self.session.flush()
         return item
+
+    async def get_m29(self, report_id: int) -> M29Report | None:
+        return await self.session.get(M29Report, report_id)
+
+    async def create_m29(self, **data) -> M29Report:
+        report = M29Report(**data)
+        self.session.add(report)
+        await self.session.flush()
+        return report

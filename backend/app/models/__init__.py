@@ -47,6 +47,9 @@ from app.models.local_price import LocalPrice
 # Telegram
 from app.models.telegram import TelegramChat
 
+# M29
+from app.models.m29_report import M29Report
+
 __all__ = [
     "Estimate",
     "EstimateItem",
@@ -100,4 +103,6 @@ __all__ = [
     "LocalPrice",
     # Telegram
     "TelegramChat",
+    # M29
+    "M29Report",
 ]
