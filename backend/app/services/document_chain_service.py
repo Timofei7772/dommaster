@@ -794,6 +794,56 @@ class DocumentChainService:
         )
         return report
 
+    async def get_estimate_chain(
+        self,
+        *,
+        estimate_id: int,
+        company_id: int,
+    ) -> dict:
+        revisions = await self.repository.list_estimate_revisions(
+            estimate_id=estimate_id,
+            company_id=company_id,
+        )
+        if not revisions:
+            estimate = await self.repository.get_estimate_for_approval(
+                estimate_id=estimate_id,
+                company_id=company_id,
+            )
+            if estimate is None:
+                raise DocumentChainNotFoundError(
+                    f"Estimate {estimate_id} was not found"
+                )
+        documents = await self.repository.list_revision_documents(
+            revision_ids=[revision.id for revision in revisions],
+            company_id=company_id,
+        )
+        return {
+            "estimate_id": estimate_id,
+            "revisions": [
+                {
+                    "id": revision.id,
+                    "revision_number": revision.revision_number,
+                    "payload_hash": revision.payload_hash,
+                    "approved_at": revision.approved_at,
+                    "created_at": revision.created_at,
+                }
+                for revision in revisions
+            ],
+            "documents": [
+                {
+                    "id": snapshot.id,
+                    "estimate_revision_id": snapshot.estimate_revision_id,
+                    "document_type": snapshot.document_type,
+                    "entity_id": snapshot.entity_id,
+                    "version": snapshot.version,
+                    "status": snapshot.status,
+                    "payload_hash": snapshot.payload_hash,
+                    "created_at": snapshot.created_at,
+                }
+                for snapshot in documents
+            ],
+        }
+
     @staticmethod
     def _ks2_payload(*, act, revision, status: str) -> dict:
         return {

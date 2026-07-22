@@ -328,3 +328,40 @@ class DocumentWorkflowRepository:
         self.session.add(report)
         await self.session.flush()
         return report
+
+    async def list_estimate_revisions(
+        self,
+        *,
+        estimate_id: int,
+        company_id: int,
+    ) -> list[EstimateRevision]:
+        result = await self.session.execute(
+            select(EstimateRevision)
+            .where(
+                EstimateRevision.estimate_id == estimate_id,
+                EstimateRevision.company_id == company_id,
+            )
+            .order_by(EstimateRevision.revision_number)
+        )
+        return list(result.scalars().all())
+
+    async def list_revision_documents(
+        self,
+        *,
+        revision_ids: list[int],
+        company_id: int,
+    ) -> list[DocumentSnapshot]:
+        if not revision_ids:
+            return []
+        result = await self.session.execute(
+            select(DocumentSnapshot)
+            .where(
+                DocumentSnapshot.estimate_revision_id.in_(revision_ids),
+                DocumentSnapshot.company_id == company_id,
+            )
+            .order_by(
+                DocumentSnapshot.created_at,
+                DocumentSnapshot.id,
+            )
+        )
+        return list(result.scalars().all())

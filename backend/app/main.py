@@ -24,7 +24,7 @@ from app.routers import (
     deals, analytics, templates, settings as settings_api,
     auth, crm_projects, crm_stages, crm_payments, crm_photos, crm_requests, crm_estimates, client_portal,
     competitor_analysis, handwriting_ocr, director_dashboard, local_prices,
-    telegram_webhook,
+    telegram_webhook, document_chain,
 )
 from app.config import settings
 from app.telegram_bot import TelegramBot
@@ -222,6 +222,11 @@ app.include_router(local_prices.router, prefix="/api/prices", tags=["Цены"])
 
 # Telegram бот
 app.include_router(telegram_webhook.router)
+app.include_router(
+    document_chain.router,
+    prefix="/api/v1/document-chain",
+    tags=["Цепочка документов"],
+)
 
 
 @app.get("/")
