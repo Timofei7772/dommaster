@@ -9,6 +9,12 @@ from app.database import Base
 
 logger = logging.getLogger(__name__)
 
+DOCUMENT_WORKFLOW_TABLES = (
+    "estimate_revisions",
+    "document_snapshots",
+    "document_audit_events",
+)
+
 
 async def migrate_crm_schema(connection: AsyncConnection) -> None:
     """Add CRM tenant columns without modifying or deleting existing rows."""
@@ -61,7 +67,23 @@ async def migrate_crm_schema(connection: AsyncConnection) -> None:
         )
 
 
+async def migrate_document_workflow_schema(connection: AsyncConnection) -> None:
+    """Create persistent document-chain tables without touching existing rows."""
+    workflow_tables = [
+        Base.metadata.tables[table_name]
+        for table_name in DOCUMENT_WORKFLOW_TABLES
+    ]
+    await connection.run_sync(
+        lambda sync_connection: Base.metadata.create_all(
+            sync_connection,
+            tables=workflow_tables,
+            checkfirst=True,
+        )
+    )
+
+
 async def initialize_database_schema(connection: AsyncConnection) -> None:
     """Migrate an existing schema, then create any tables missing from it."""
     await migrate_crm_schema(connection)
+    await migrate_document_workflow_schema(connection)
     await connection.run_sync(Base.metadata.create_all)

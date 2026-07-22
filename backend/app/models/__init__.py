@@ -33,6 +33,11 @@ from app.models.erp_models import (
     ProjectFinance,
 )
 from app.models.document_registry import Document, DocumentType, DocumentStatus
+from app.models.document_workflow import (
+    DocumentAuditEvent,
+    DocumentSnapshot,
+    EstimateRevision,
+)
 from app.models.versioning import EstimateVersion, AuditLog
 
 # CRM
@@ -82,6 +87,9 @@ __all__ = [
     "Document",
     "DocumentType",
     "DocumentStatus",
+    "EstimateRevision",
+    "DocumentSnapshot",
+    "DocumentAuditEvent",
     "EstimateVersion",
     "AuditLog",
     # CRM (Deals)
