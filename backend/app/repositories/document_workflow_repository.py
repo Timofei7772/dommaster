@@ -12,6 +12,7 @@ from app.models.document_workflow import (
 )
 from app.models.estimate import Estimate
 from app.models.ks2 import KS2Act, KS2Item
+from app.models.ks3 import KS3Certificate, KS3Item
 from app.models.project import Project
 
 
@@ -233,6 +234,87 @@ class DocumentWorkflowRepository:
 
     async def create_ks2_item(self, **data) -> KS2Item:
         item = KS2Item(**data)
+        self.session.add(item)
+        await self.session.flush()
+        return item
+
+    async def get_signed_ks2_acts(
+        self,
+        *,
+        ks2_ids: list[int],
+        company_id: int,
+    ) -> list[KS2Act]:
+        result = await self.session.execute(
+            select(KS2Act)
+            .join(DocumentSnapshot, DocumentSnapshot.entity_id == KS2Act.id)
+            .where(
+                KS2Act.id.in_(ks2_ids),
+                DocumentSnapshot.document_type == "ks2",
+                DocumentSnapshot.status == "signed",
+                DocumentSnapshot.company_id == company_id,
+            )
+            .options(selectinload(KS2Act.items))
+            .order_by(KS2Act.id)
+        )
+        return list(result.unique().scalars().all())
+
+    async def get_used_ks2_ids(
+        self,
+        *,
+        ks2_ids: list[int],
+        company_id: int,
+    ) -> set[int]:
+        result = await self.session.execute(
+            select(KS3Item.ks2_act_id)
+            .join(KS3Certificate, KS3Certificate.id == KS3Item.certificate_id)
+            .join(
+                DocumentSnapshot,
+                DocumentSnapshot.entity_id == KS3Certificate.id,
+            )
+            .where(
+                KS3Item.ks2_act_id.in_(ks2_ids),
+                DocumentSnapshot.document_type == "ks3",
+                DocumentSnapshot.company_id == company_id,
+            )
+        )
+        return set(result.scalars().all())
+
+    async def get_ks3(self, certificate_id: int) -> KS3Certificate | None:
+        result = await self.session.execute(
+            select(KS3Certificate)
+            .where(KS3Certificate.id == certificate_id)
+            .options(selectinload(KS3Certificate.items))
+        )
+        return result.scalar_one_or_none()
+
+    async def get_previous_ks3_total(
+        self,
+        *,
+        revision_id: int,
+        company_id: int,
+    ) -> float:
+        result = await self.session.execute(
+            select(func.sum(KS3Certificate.total_current_period))
+            .join(
+                DocumentSnapshot,
+                DocumentSnapshot.entity_id == KS3Certificate.id,
+            )
+            .where(
+                DocumentSnapshot.document_type == "ks3",
+                DocumentSnapshot.estimate_revision_id == revision_id,
+                DocumentSnapshot.company_id == company_id,
+            )
+        )
+        return float(result.scalar_one_or_none() or 0)
+
+    async def create_ks3(self, **data) -> KS3Certificate:
+        certificate = KS3Certificate(**data)
+        self.session.add(certificate)
+        await self.session.flush()
+        return certificate
+
+    async def create_ks3_item(self, **data) -> KS3Item:
+        item = KS3Item(**data)
         self.session.add(item)
         await self.session.flush()
         return item

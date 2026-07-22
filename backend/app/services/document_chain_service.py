@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.contract import ContractStatus, ContractType
 from app.models.ks2 import KS2Status
+from app.models.ks3 import KS3Status
 from app.repositories.document_workflow_repository import (
     DocumentWorkflowRepository,
 )
@@ -32,6 +33,10 @@ class DocumentChainIdempotencyConflictError(DocumentChainError):
 
 class InvalidDocumentQuantityError(DocumentChainError):
     """Raised when executed quantity is invalid or exceeds the approved source."""
+
+
+class InvalidDocumentSelectionError(DocumentChainError):
+    """Raised when selected source documents are incompatible or unavailable."""
 
 
 def _canonical_hash(payload: dict) -> str:
@@ -463,6 +468,178 @@ class DocumentChainService:
             reason="KS-2 approved after remaining-quantity validation",
         )
         return act
+
+    async def create_ks3(
+        self,
+        *,
+        ks2_ids: list[int],
+        company_id: int,
+        actor_id: int | None,
+        certificate_data: dict,
+        idempotency_key: str,
+    ):
+        existing = await self.repository.get_snapshot_by_idempotency_key(
+            company_id=company_id,
+            idempotency_key=idempotency_key,
+        )
+        if existing is not None:
+            if existing.document_type != "ks3":
+                raise DocumentChainIdempotencyConflictError(
+                    "Idempotency key belongs to another document command"
+                )
+            certificate = await self.repository.get_ks3(existing.entity_id)
+            if certificate is None:
+                raise DocumentChainNotFoundError("Idempotent KS-3 record is missing")
+            existing_ids = existing.payload_json.get("ks3", {}).get("ks2_ids", [])
+            if existing_ids != ks2_ids:
+                raise DocumentChainIdempotencyConflictError(
+                    "Idempotency key belongs to another KS-3 selection"
+                )
+            return certificate
+
+        if not ks2_ids or len(set(ks2_ids)) != len(ks2_ids):
+            raise InvalidDocumentSelectionError(
+                "KS-3 requires a non-empty unique KS-2 selection"
+            )
+        acts = await self.repository.get_signed_ks2_acts(
+            ks2_ids=ks2_ids,
+            company_id=company_id,
+        )
+        acts_by_id = {act.id: act for act in acts}
+        if set(acts_by_id) != set(ks2_ids):
+            raise InvalidDocumentSelectionError(
+                "Every KS-2 must be signed and belong to the active company"
+            )
+        ordered_acts = [acts_by_id[act_id] for act_id in ks2_ids]
+        signed_snapshots = []
+        for act in ordered_acts:
+            snapshot = await self.repository.get_document_snapshot(
+                document_type="ks2",
+                entity_id=act.id,
+                status=KS2Status.SIGNED.value,
+            )
+            if snapshot is None or snapshot.company_id != company_id:
+                raise InvalidDocumentSelectionError("Signed KS-2 snapshot is missing")
+            signed_snapshots.append(snapshot)
+
+        revision_ids = {snapshot.estimate_revision_id for snapshot in signed_snapshots}
+        project_ids = {snapshot.project_id for snapshot in signed_snapshots}
+        contract_ids = {act.contract_id for act in ordered_acts}
+        if len(revision_ids) != 1 or len(project_ids) != 1 or len(contract_ids) != 1:
+            raise InvalidDocumentSelectionError(
+                "KS-2 acts must share estimate revision, project, and contract"
+            )
+        used_ids = await self.repository.get_used_ks2_ids(
+            ks2_ids=ks2_ids,
+            company_id=company_id,
+        )
+        if used_ids:
+            raise InvalidDocumentSelectionError(
+                f"KS-2 acts are already included in KS-3: {sorted(used_ids)}"
+            )
+
+        revision_id = next(iter(revision_ids))
+        project_id = next(iter(project_ids))
+        contract_id = next(iter(contract_ids))
+        revision = await self.repository.get_revision(
+            revision_id=revision_id,
+            company_id=company_id,
+        )
+        if revision is None:
+            raise DocumentChainNotFoundError("Estimate revision was not found")
+        previous_total = _money(await self.repository.get_previous_ks3_total(
+            revision_id=revision_id,
+            company_id=company_id,
+        ))
+        current_total = _money(sum(
+            (Decimal(str(act.total_without_vat or 0)) for act in ordered_acts),
+            Decimal("0"),
+        ))
+        vat_amount = _money(sum(
+            (Decimal(str(act.vat_amount or 0)) for act in ordered_acts),
+            Decimal("0"),
+        ))
+        total_with_vat = _money(current_total + vat_amount)
+        cumulative = _money(previous_total + current_total)
+        source = revision.payload_json
+        certificate = await self.repository.create_ks3(
+            number=certificate_data["number"],
+            certificate_date=certificate_data["certificate_date"],
+            period_start=certificate_data["period_start"],
+            period_end=certificate_data["period_end"],
+            contract_id=contract_id,
+            customer=source["parties"]["customer"]["name"],
+            contractor=source["parties"]["contractor"]["name"],
+            object_name=source["object"].get("name"),
+            total_contract=float(Decimal(source["totals"]["total_with_vat"])),
+            total_from_start=float(cumulative),
+            total_from_year_start=float(cumulative),
+            total_current_period=float(current_total),
+            vat_amount=float(vat_amount),
+            total_with_vat=float(total_with_vat),
+            status=KS3Status.DRAFT,
+        )
+        running_total = previous_total
+        for order_index, act in enumerate(ordered_acts, 1):
+            act_total = _money(act.total_without_vat)
+            running_total = _money(running_total + act_total)
+            await self.repository.create_ks3_item(
+                certificate_id=certificate.id,
+                ks2_act_id=act.id,
+                item_number=str(order_index),
+                order_index=order_index,
+                name=f"Акт КС-2 №{act.number} от {act.act_date.isoformat()}",
+                total_from_start=float(running_total),
+                total_from_year_start=float(running_total),
+                total_current_period=float(act_total),
+            )
+        certificate = await self.repository.get_ks3(certificate.id)
+        snapshot_payload = {
+            "schema_version": "ks3-snapshot.v1",
+            "source": {
+                "estimate_revision_id": revision.id,
+                "estimate_revision_hash": revision.payload_hash,
+                "contract_id": contract_id,
+            },
+            "ks3": {
+                "id": certificate.id,
+                "number": certificate.number,
+                "certificate_date": certificate.certificate_date.isoformat(),
+                "period_start": certificate.period_start.isoformat(),
+                "period_end": certificate.period_end.isoformat(),
+                "status": KS3Status.DRAFT.value,
+                "ks2_ids": ks2_ids,
+                "total_contract": _number(certificate.total_contract),
+                "total_from_start": _number(certificate.total_from_start),
+                "total_from_year_start": _number(certificate.total_from_year_start),
+                "total_current_period": _number(certificate.total_current_period),
+                "vat_amount": _number(certificate.vat_amount),
+                "total_with_vat": _number(certificate.total_with_vat),
+            },
+        }
+        snapshot = await self.repository.create_snapshot(
+            company_id=company_id,
+            project_id=project_id,
+            estimate_revision_id=revision.id,
+            document_type="ks3",
+            entity_id=certificate.id,
+            version=1,
+            status=KS3Status.DRAFT.value,
+            payload_json=snapshot_payload,
+            payload_hash=_canonical_hash(snapshot_payload),
+            template_version="ks3.v1",
+            idempotency_key=idempotency_key,
+            created_by=actor_id,
+        )
+        await self.repository.create_audit_event(
+            snapshot_id=snapshot.id,
+            company_id=company_id,
+            actor_id=actor_id,
+            previous_status=None,
+            new_status=KS3Status.DRAFT.value,
+            reason="Created from signed KS-2 acts",
+        )
+        return certificate
 
     @staticmethod
     def _ks2_payload(*, act, revision, status: str) -> dict:
