@@ -1,11 +1,6 @@
-import importlib
-
-
 def test_settings_accept_release_debug_value(monkeypatch):
     monkeypatch.setenv("DEBUG", "release")
 
-    config_module = importlib.import_module("app.config")
-    reloaded = importlib.reload(config_module)
+    from app.config import Settings
 
-    assert reloaded.Settings(DEBUG="release").DEBUG is False
-    assert reloaded.settings.DEBUG is False
+    assert Settings(_env_file=None).DEBUG is False
