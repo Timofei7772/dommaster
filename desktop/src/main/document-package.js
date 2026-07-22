@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { buildPackageDir } = require('../output-paths');
+const { adaptBackendSnapshot } = require('./backend-snapshot-adapter');
 
 function toNumber(value, fallback = 0) {
   const numeric = Number(value);
@@ -69,6 +70,16 @@ function buildPackageDefaults(context, nowValue) {
   };
 }
 
+function normalizePackageContext(context) {
+  if (context?.backendRevision) {
+    return adaptBackendSnapshot({
+      estimateRevision: context.backendRevision,
+      documentSnapshot: context.backendDocument,
+    });
+  }
+  return context;
+}
+
 async function generateDocumentPackage({
   context,
   createRecords,
@@ -77,6 +88,7 @@ async function generateDocumentPackage({
   logger,
   now = () => new Date().toISOString(),
 } = {}) {
+  context = normalizePackageContext(context);
   if (!context?.estimate?.id || !(context?.items || []).length) {
     throw new Error('Нет данных для генерации');
   }
@@ -136,4 +148,5 @@ async function generateDocumentPackage({
 module.exports = {
   buildPackageDefaults,
   generateDocumentPackage,
+  normalizePackageContext,
 };
