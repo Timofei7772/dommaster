@@ -5,20 +5,9 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum, ForeignKey
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-import enum
 
 from app.database import Base
-
-
-class UserRole(str, enum.Enum):
-    """Роли пользователей"""
-    ADMIN = "admin"           # Администратор
-    MANAGER = "manager"       # Менеджер
-    ESTIMATOR = "estimator"   # Сметчик
-    VIEWER = "viewer"         # Только просмотр
-    OWNER = "owner"           # Владелец строительной компании
-    WORKER = "worker"         # Исполнитель/Рабочий
-    CLIENT = "client"         # Клиент/Заказчик
+from app.shared.enums import UserRole
 
 
 class User(Base):

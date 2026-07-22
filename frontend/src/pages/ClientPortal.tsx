@@ -226,11 +226,13 @@ export default function ClientPortal() {
                             ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
                             : s.status === 'in_progress'
                             ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                            : s.status === 'review'
+                            ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                             : s.status === 'delayed'
                             ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
                             : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
                         }`}>
-                          {isDone ? 'Завершен' : s.status === 'in_progress' ? 'В процессе' : s.status === 'delayed' ? 'Просрочен' : 'Ожидает'}
+                          {isDone ? 'Завершен' : s.status === 'in_progress' ? 'В процессе' : s.status === 'review' ? 'На приемке' : s.status === 'delayed' ? 'Просрочен' : 'Ожидает'}
                         </span>
                       </div>
 

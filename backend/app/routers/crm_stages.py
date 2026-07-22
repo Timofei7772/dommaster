@@ -15,6 +15,8 @@ from app.models.work_stage import WorkStage
 from app.models.project import Project
 from app.models.user import User, UserRole
 from app.routers.auth import get_current_user
+from app.services.stage_workflow_service import StageWorkflowError, StageWorkflowService
+from app.shared.enums import WorkStageStatus
 
 router = APIRouter()
 
@@ -26,7 +28,7 @@ class StageCreate(BaseModel):
     executor_id: Optional[int] = None
     start_date: date
     end_date: date
-    status: str = "not_started"  # not_started / in_progress / done / delayed
+    status: WorkStageStatus = WorkStageStatus.PENDING
 
 
 class StageUpdate(BaseModel):
@@ -34,7 +36,7 @@ class StageUpdate(BaseModel):
     executor_id: Optional[int] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
-    status: Optional[str] = None
+    status: Optional[WorkStageStatus] = None
 
 
 class ExecutorInfo(BaseModel):
@@ -100,13 +102,21 @@ async def create_stage(
     """Создать новый этап работ в графике"""
     await verify_project_access(project_id, current_user, db)
 
+    try:
+        StageWorkflowService.validate_initial_status(data.status)
+    except StageWorkflowError as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"code": error.code, "message": str(error)},
+        ) from error
+
     stage = WorkStage(
         project_id=project_id,
         name=data.name,
         executor_id=data.executor_id,
         start_date=data.start_date,
         end_date=data.end_date,
-        status=data.status
+        status=data.status.value
     )
     db.add(stage)
     await db.commit()
@@ -142,6 +152,19 @@ async def update_stage(
         raise HTTPException(status_code=403, detail="Нет прав доступа")
 
     update_data = data.model_dump(exclude_unset=True)
+    requested_status = data.status
+    if requested_status is not None:
+        try:
+            await StageWorkflowService(db).validate_transition(
+                stage=stage,
+                target=requested_status,
+            )
+        except StageWorkflowError as error:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={"code": error.code, "message": str(error)},
+            ) from error
+        update_data["status"] = requested_status.value
     for key, val in update_data.items():
         setattr(stage, key, val)
 

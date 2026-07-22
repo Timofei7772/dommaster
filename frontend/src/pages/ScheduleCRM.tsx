@@ -21,7 +21,7 @@ interface Stage {
   executor_id?: number
   start_date: string
   end_date: string
-  status: 'not_started' | 'in_progress' | 'done' | 'delayed'
+  status: 'not_started' | 'in_progress' | 'review' | 'done' | 'delayed'
   executor?: Worker
 }
 
@@ -40,7 +40,7 @@ export default function ScheduleCRM() {
   const [editExecutor, setEditExecutor] = useState<number | undefined>(undefined)
   const [editStart, setEditStart] = useState('')
   const [editEnd, setEditEnd] = useState('')
-  const [editStatus, setEditStatus] = useState<'not_started' | 'in_progress' | 'done' | 'delayed'>('not_started')
+  const [editStatus, setEditStatus] = useState<'not_started' | 'in_progress' | 'review' | 'done' | 'delayed'>('not_started')
 
   // Форма добавления нового этапа
   const [newStageName, setNewStageName] = useState('')
@@ -140,6 +140,7 @@ export default function ScheduleCRM() {
   const statusOptions = [
     { value: 'not_started', label: 'Не начат', color: 'bg-slate-500/10 text-slate-500 border-slate-500/20' },
     { value: 'in_progress', label: 'В процессе', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
+    { value: 'review', label: 'На приемке', color: 'bg-amber-500/10 text-amber-600 border-amber-500/20' },
     { value: 'done', label: 'Завершен', color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
     { value: 'delayed', label: 'Просрочен', color: 'bg-rose-500/10 text-rose-500 border-rose-500/20' }
   ]

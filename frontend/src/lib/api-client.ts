@@ -40,7 +40,11 @@ async function handleResponse<T>(res: Response, path: string, req?: ReqInfo): Pr
   }
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}))
-    throw new Error(errorData.detail || `Ошибка ${res.status}`)
+    const detail = errorData.detail
+    const message = typeof detail === 'string'
+      ? detail
+      : detail?.message || `Ошибка ${res.status}`
+    throw new Error(message)
   }
   return res.json()
 }
@@ -125,7 +129,14 @@ export async function apiDelete(path: string): Promise<void> {
     try { await tryAutoLogin(); window.location.reload() } catch {}
     throw new Error('Unauthorized')
   }
-  if (!res.ok) throw new Error(`Ошибка ${res.status}`)
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}))
+    const detail = errorData.detail
+    const message = typeof detail === 'string'
+      ? detail
+      : detail?.message || `Ошибка ${res.status}`
+    throw new Error(message)
+  }
 }
 
 export async function apiUpload<T = any>(path: string, formData: FormData): Promise<T> {

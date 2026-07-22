@@ -20,6 +20,10 @@ from app.models.user import User
 from app.routers.auth import get_current_user
 from app.routers.crm_stages import verify_project_access
 from app.utils import validate_file_extension
+from app.services.stage_workflow_service import (
+    LastStageProofError,
+    StageWorkflowService,
+)
 
 router = APIRouter()
 
@@ -92,12 +96,14 @@ async def upload_photos(
     """Пакетная загрузка фотографий для проекта/этапа"""
     await verify_project_access(project_id, current_user, db)
 
+    stage = None
     if stage_id:
         # Проверяем, что этап принадлежит проекту
         stage_res = await db.execute(
             select(WorkStage).where(WorkStage.id == stage_id, WorkStage.project_id == project_id)
         )
-        if not stage_res.scalar_one_or_none():
+        stage = stage_res.scalar_one_or_none()
+        if not stage:
             raise HTTPException(status_code=400, detail="Указанный этап не принадлежит этому проекту")
 
     # Создаем специфическую папку для проекта
@@ -134,6 +140,8 @@ async def upload_photos(
         uploaded_records.append(photo_report)
 
     await db.flush()
+    if stage is not None:
+        StageWorkflowService(db).mark_ready_for_review(stage)
     await db.commit()
 
     # Загружаем метаданные для ответа
@@ -172,7 +180,10 @@ async def delete_photo(
     result = await db.execute(
         select(PhotoReport)
         .where(PhotoReport.id == photo_id)
-        .options(selectinload(PhotoReport.project))
+        .options(
+            selectinload(PhotoReport.project),
+            selectinload(PhotoReport.stage),
+        )
     )
     photo = result.scalar_one_or_none()
     if not photo:
@@ -181,6 +192,14 @@ async def delete_photo(
     # Проверка доступа
     if photo.project.company_id != current_user.company_id:
         raise HTTPException(status_code=403, detail="Нет прав доступа")
+
+    try:
+        await StageWorkflowService(db).ensure_photo_can_be_deleted(photo)
+    except LastStageProofError as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"code": error.code, "message": str(error)},
+        ) from error
 
     # Удаление файла с диска
     # url имеет вид: /uploads/project_id/filename.jpg

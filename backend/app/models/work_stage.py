@@ -7,6 +7,7 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
 from app.database import Base
+from app.shared.enums import WorkStageStatus
 
 
 class WorkStage(Base):
@@ -22,8 +23,13 @@ class WorkStage(Base):
     start_date = Column(Date, nullable=False, comment="Дата начала")
     end_date = Column(Date, nullable=False, comment="Дата окончания")
     
-    # Статус: not_started / in_progress / done / delayed
-    status = Column(String(50), default="not_started", comment="Статус этапа")
+    # Значения остаются строками для совместимости с установленными SQLite БД.
+    status = Column(
+        String(50),
+        default=WorkStageStatus.PENDING.value,
+        nullable=False,
+        comment="Статус этапа технадзора",
+    )
     comments_json = Column(String(4000), default="[]", comment="Комментарии заказчика по этапу (JSON список)")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
