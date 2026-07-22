@@ -10,6 +10,8 @@
     "start": "electron .",
     "build:renderer": "cd ../frontend && npm run build",
     "build:win": "npm run build:renderer && electron-builder --win",
+    "build:market": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-market-release.ps1",
+    "verify:market": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-market-release.ps1",
     "build:win:clean": "powershell -ExecutionPolicy Bypass -File scripts/build-clean.ps1 && npm run build:win",
     "build:win:alt": "powershell -ExecutionPolicy Bypass -File scripts/build-win-alt.ps1",
     "obfuscate": "javascript-obfuscator src/license-secure.js --output src/license-secure.min.js --compact true --control-flow-flattening true --control-flow-flattening-threshold 0.75 --dead-code-injection true --dead-code-injection-threshold 0.4 --string-array true --string-array-encoding rc4 --string-array-threshold 0.8 --self-defending true --disable-console-output true",
