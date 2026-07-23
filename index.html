@@ -1302,40 +1302,40 @@
     <!-- SERVICES -->
     <section class="section services" id="services">
         <div class="section-inner">
-            <div class="section-label">Премиальный сервис</div>
-            <h2 class="section-title">Элитный ремонт и комплектация объектов</h2>
-            <p class="section-desc">Реализуем амбициозные дизайнерские проекты «под ключ». Освобождаем вас от всех забот, закупок и контроля.
+            <div class="section-label">Наши Услуги</div>
+            <h2 class="section-title">Ремонт квартир и коттеджей под ключ</h2>
+            <p class="section-desc">Качественный ремонт любой сложности с фиксированной сметой и официальной гарантией.
             </p>
             <div class="services-grid">
                 <div class="service-card">
                     <span class="service-card-icon">🎨</span>
-                    <div class="service-card-title">Дизайнерский ремонт</div>
-                    <div class="service-card-price">от 12 000 ₽/м²</div>
-                    <div class="service-card-desc">Полная реализация дизайн-проекта любой сложности: сложные световые линии, идеальная геометрия, скрытые трековые системы.</div>
+                    <div class="service-card-title">Косметический ремонт</div>
+                    <div class="service-card-price">от 2 500 ₽/м²</div>
+                    <div class="service-card-desc">Освежение интерьера: покраска стен, замена напольных покрытий, обновление сантехники и электрики.</div>
                     <ul>
-                        <li>Авторский надзор 24/7</li>
-                        <li>Полный контроль качества</li>
+                        <li>Быстрые сроки от 15 дней</li>
+                        <li>Гарантия 3 года</li>
                     </ul>
                 </div>
                 <div class="service-card" style="border: 2px solid #1d1d1f; position: relative; overflow: hidden;">
-                    <div style="position: absolute; top: 12px; right: 12px; background: #1d1d1f; color: #fff; font-size: 0.65rem; font-weight: 700; padding: 4px 10px; border-radius: 999px;">ТОП ВЫБОР</div>
-                    <span class="service-card-icon">✦</span>
-                    <div class="service-card-title">VIP / Элитный коттедж</div>
-                    <div class="service-card-price">от 18 000 ₽/м²</div>
-                    <div class="service-card-desc">Премиальная отделка загородных резиденций и пентхаусов. Крупноформатный керамогранит, инженерный паркет, премиум-электрика.</div>
+                    <div style="position: absolute; top: 12px; right: 12px; background: #1d1d1f; color: #fff; font-size: 0.65rem; font-weight: 700; padding: 4px 10px; border-radius: 999px;">ПОПУЛЯРНЫЙ</div>
+                    <span class="service-card-icon">🔨</span>
+                    <div class="service-card-title">Капитальный ремонт</div>
+                    <div class="service-card-price">от 6 500 ₽/м²</div>
+                    <div class="service-card-desc">Полное обновление: демонтаж, выравнивание стен и полов, замена всех коммуникаций, чистовая отделка.</div>
                     <ul>
-                        <li>Система «Умный Дом»</li>
-                        <li>Гарантия 5 лет по договору</li>
+                        <li>Прозрачная смета SmetaAI</li>
+                        <li>Гарантия 3 года по договору</li>
                     </ul>
                 </div>
                 <div class="service-card">
-                    <span class="service-card-icon">🛋️</span>
-                    <div class="service-card-title">Комплектация под ключ</div>
-                    <div class="service-card-price">Индивидуальный чек</div>
-                    <div class="service-card-desc">Полный подбор и закупка премиальной мебели, кухонных гарнитуров (от 1.5 млн ₽), брендовой сантехники и эксклюзивного света.</div>
+                    <span class="service-card-icon">🏡</span>
+                    <div class="service-card-title">Ремонт коттеджей</div>
+                    <div class="service-card-price">от 4 500 ₽/м²</div>
+                    <div class="service-card-desc">Отделка коттеджей и таунхаусов: инженерные сети, штукатурные работы, сантехника, плитка и чистовая отделка.</div>
                     <ul>
-                        <li>Прямые скидки от салонов</li>
-                        <li>Приемка и монтаж меблировки</li>
+                        <li>Собственные бригады</li>
+                        <li>Поэтапная оплата</li>
                     </ul>
                 </div>
             </div>
@@ -1627,11 +1627,11 @@
                         </div>
                     </div>
                     <div class="calc-group">
-                        <label>Уровень проекта</label>
+                        <label>Вид ремонта</label>
                         <div class="calc-options" id="calcRepair">
-                            <span class="calc-option active" data-price="12000">Дизайнерский (от 12 000 ₽/м²)</span>
-                            <span class="calc-option" data-price="18000">VIP / Коттедж (от 18 000 ₽/м²)</span>
-                            <span class="calc-option" data-price="25000">Элитный Пентхаус (от 25 000 ₽/м²)</span>
+                            <span class="calc-option active" data-price="2500">Косметический (от 2 500 ₽/м²)</span>
+                            <span class="calc-option" data-price="6500">Капитальный (от 6 500 ₽/м²)</span>
+                            <span class="calc-option" data-price="4500">Коттедж (от 4 500 ₽/м²)</span>
                         </div>
                     </div>
                     <div class="calc-group">
@@ -1794,7 +1794,7 @@
         });
 
         // Calculator
-        let calcPrice = 12000, calcExtras = 0, calcArea = 60;
+        let calcPrice = 2500, calcExtras = 0, calcArea = 60;
         const calcOptions = (sel, cb) => document.querySelectorAll(sel).forEach(el => el.addEventListener('click', function () {
             document.querySelectorAll(sel).forEach(o => o.classList.remove('active')); this.classList.add('active'); cb(this);
         }));
