@@ -152,9 +152,1679 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        html {
+            scroll-behavior: smooth;
+            overflow-x: hidden
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+            background: #fff;
+            color: #1d1d1f;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            cursor: default;
+        }
+
+        ::selection {
+            background: rgba(0, 0, 0, .08)
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-family: inherit
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f5f5f7
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c7c7cc;
+            border-radius: 2px
+        }
+
+        /* ===== NAV ===== */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 0 48px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all .4s cubic-bezier(.25, .1, .25, 1);
+            background: rgba(255, 255, 255, .8);
+            backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 1px solid transparent;
+        }
+
+        .nav.scrolled {
+            border-bottom-color: rgba(0, 0, 0, .08)
+        }
+
+        .nav-logo {
+            font-weight: 700;
+            font-size: 1.1rem;
+            letter-spacing: -.5px;
+            color: #1d1d1f;
+            display: flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .nav-logo span {
+            font-weight: 300;
+            opacity: .5
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 28px
+        }
+
+        .nav-links a {
+            font-size: .8rem;
+            font-weight: 400;
+            color: #424245;
+            transition: color .2s;
+            letter-spacing: -.01em
+        }
+
+        .nav-links a:hover {
+            color: #1d1d1f
+        }
+
+        .nav-cta {
+            padding: 8px 20px;
+            background: #1d1d1f;
+            color: #fff;
+            border-radius: 980px;
+            font-size: .78rem;
+            font-weight: 500;
+            transition: all .3s;
+        }
+
+        .nav-cta:hover {
+            background: #2d2d2f;
+            transform: scale(1.02)
+        }
+
+        .mobile-toggle {
+            display: none;
+            width: 24px;
+            height: 18px;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer
+        }
+
+        .mobile-toggle span {
+            width: 100%;
+            height: 1.5px;
+            background: #1d1d1f;
+            border-radius: 1px;
+            transition: all .3s
+        }
+
+        .mobile-toggle.active span:nth-child(1) {
+            transform: rotate(45deg) translate(4px, 4px)
+        }
+
+        .mobile-toggle.active span:nth-child(2) {
+            opacity: 0
+        }
+
+        .mobile-toggle.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(5px, -5px)
+        }
+
+        /* ===== HERO ===== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 120px 48px 80px;
+            position: relative;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -600px;
+            right: -400px;
+            width: 900px;
+            height: 900px;
+            background: radial-gradient(circle, rgba(0, 0, 0, .02) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto;
+            width: 100%
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            background: #f5f5f7;
+            border-radius: 980px;
+            font-size: .7rem;
+            font-weight: 500;
+            color: #6e6e73;
+            letter-spacing: -.01em;
+            margin-bottom: 28px;
+            opacity: 0;
+            transform: translateY(12px);
+        }
+
+        .hero-badge span {
+            width: 5px;
+            height: 5px;
+            background: #1d1d1f;
+            border-radius: 50%
+        }
+
+        .hero h1 {
+            font-size: clamp(2.8rem, 6vw, 5rem);
+            font-weight: 700;
+            letter-spacing: -.04em;
+            line-height: 1.05;
+            margin-bottom: 20px;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .hero h1 .fade {
+            color: #6e6e73;
+            font-weight: 400
+        }
+
+        .hero p {
+            font-size: clamp(1rem, 1.5vw, 1.3rem);
+            color: #6e6e73;
+            font-weight: 400;
+            max-width: 580px;
+            line-height: 1.6;
+            margin-bottom: 40px;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            opacity: 0;
+            transform: translateY(20px)
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 28px;
+            border-radius: 980px;
+            font-size: .9rem;
+            font-weight: 500;
+            transition: all .3s cubic-bezier(.25, .1, .25, 1);
+            letter-spacing: -.01em;
+        }
+
+        .btn-primary {
+            background: #1d1d1f;
+            color: #fff
+        }
+
+        .btn-primary:hover {
+            background: #2d2d2f
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #1d1d1f;
+            border: 1px solid rgba(0, 0, 0, .12)
+        }
+
+        .btn-outline:hover {
+            border-color: rgba(0, 0, 0, .3);
+            background: rgba(0, 0, 0, .02)
+        }
+
+        .btn-wa {
+            background: #25D366;
+            color: #fff
+        }
+
+        .btn-wa:hover {
+            background: #20bd5a
+        }
+
+        .btn-wa svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 48px;
+            margin-top: 60px;
+            padding-top: 28px;
+            border-top: 1px solid rgba(0, 0, 0, .06);
+            opacity: 0;
+            transform: translateY(16px);
+        }
+
+        .hero-stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: -.03em
+        }
+
+        .hero-stat-label {
+            font-size: .78rem;
+            color: #6e6e73;
+            margin-top: 2px;
+            font-weight: 400
+        }
+
+        /* ===== SECTION ===== */
+        .section {
+            padding: 140px 48px
+        }
+
+        .section-inner {
+            max-width: 1100px;
+            margin: 0 auto
+        }
+
+        .section-label {
+            font-size: .72rem;
+            font-weight: 600;
+            color: #6e6e73;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: clamp(1.8rem, 3.5vw, 3rem);
+            font-weight: 700;
+            letter-spacing: -.03em;
+            margin-bottom: 16px;
+            line-height: 1.15;
+            color: #1d1d1f;
+        }
+
+        .section-desc {
+            font-size: 1.1rem;
+            color: #6e6e73;
+            line-height: 1.7;
+            max-width: 600px;
+            margin-bottom: 60px;
+            font-weight: 400;
+        }
+
+        /* ===== SERVICES ===== */
+        .services {
+            background: #f5f5f7
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px
+        }
+
+        .service-card {
+            padding: 36px 28px;
+            border-radius: 18px;
+            background: #fff;
+            transition: all .4s cubic-bezier(.25, .1, .25, 1);
+            opacity: 0;
+            transform: translateY(24px);
+        }
+
+        .service-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, .04)
+        }
+
+        .service-card-icon {
+            font-size: 2rem;
+            margin-bottom: 16px;
+            display: block
+        }
+
+        .service-card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            letter-spacing: -.02em;
+            margin-bottom: 4px
+        }
+
+        .service-card-price {
+            font-size: .85rem;
+            color: #6e6e73;
+            margin-bottom: 12px;
+            font-weight: 500
+        }
+
+        .service-card-desc {
+            font-size: .88rem;
+            color: #86868b;
+            line-height: 1.6;
+            margin-bottom: 16px
+        }
+
+        .service-card ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 4px
+        }
+
+        .service-card ul li {
+            font-size: .8rem;
+            color: #6e6e73;
+            display: flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .service-card ul li::before {
+            content: '✓';
+            color: #1d1d1f;
+            font-weight: 600
+        }
+
+        /* ===== ABOUT ===== */
+        .about-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center
+        }
+
+        .about-text .section-title {
+            margin-bottom: 20px
+        }
+
+        .about-text p {
+            color: #6e6e73;
+            line-height: 1.7;
+            font-size: .95rem;
+            margin-bottom: 16px
+        }
+
+        .about-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px
+        }
+
+        .about-stat {
+            padding: 28px;
+            border-radius: 16px;
+            background: #f5f5f7;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .about-stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -.03em
+        }
+
+        .about-stat-label {
+            font-size: .78rem;
+            color: #6e6e73;
+            margin-top: 4px
+        }
+
+        .about-stat-wide {
+            grid-column: span 2;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-align: left;
+            padding: 20px 28px
+        }
+
+        .about-stat-wide .about-stat-value {
+            font-size: 1.1rem
+        }
+
+        /* ===== ADVANTAGES ===== */
+        .advantages {
+            background: #f5f5f7
+        }
+
+        .advantages-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px
+        }
+
+        .advantage {
+            padding: 28px 20px;
+            border-radius: 16px;
+            background: #fff;
+            text-align: center;
+            transition: all .3s;
+            opacity: 0;
+            transform: translateY(16px);
+        }
+
+        .advantage:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .04)
+        }
+
+        .advantage-icon {
+            font-size: 1.6rem;
+            margin-bottom: 12px;
+            display: block
+        }
+
+        .advantage-title {
+            font-weight: 600;
+            font-size: .9rem;
+            margin-bottom: 4px
+        }
+
+        .advantage-desc {
+            font-size: .78rem;
+            color: #86868b;
+            line-height: 1.5
+        }
+
+        /* ===== TEAM ===== */
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px
+        }
+
+        .team-card {
+            border-radius: 16px;
+            overflow: hidden;
+            background: #f5f5f7;
+            transition: all .3s;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .team-card:hover {
+            transform: translateY(-4px)
+        }
+
+        .team-card-avatar {
+            width: 100%;
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #e8e8ed, #d1d1d6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+
+        .team-card-body {
+            padding: 16px 20px 20px
+        }
+
+        .team-card-name {
+            font-weight: 600;
+            font-size: .95rem
+        }
+
+        .team-card-role {
+            font-size: .78rem;
+            color: #6e6e73;
+            margin-top: 2px
+        }
+
+        .team-card-exp {
+            font-size: .75rem;
+            color: #86868b;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px
+        }
+
+        /* ===== GALLERY ===== */
+        .gallery {
+            background: #f5f5f7
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px
+        }
+
+        .gallery-item {
+            aspect-ratio: 1;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            position: relative;
+            transition: all .4s;
+        }
+
+        .gallery-item:hover {
+            transform: scale(1.02);
+            z-index: 2;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .1)
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform .5s
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.05)
+        }
+
+        .gallery-item:first-child {
+            grid-column: span 2;
+            grid-row: span 2
+        }
+
+        /* ===== TESTIMONIALS ===== */
+        .testimonials-track {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            padding: 8px 0 24px;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none
+        }
+
+        .testimonials-track::-webkit-scrollbar {
+            display: none
+        }
+
+        .testimonial {
+            min-width: 340px;
+            padding: 28px;
+            border-radius: 16px;
+            background: #f5f5f7;
+            scroll-snap-align: start;
+            opacity: 0;
+            transform: translateY(16px);
+        }
+
+        .testimonial-stars {
+            color: #1d1d1f;
+            font-size: .8rem;
+            margin-bottom: 8px;
+            letter-spacing: 1px
+        }
+
+        .testimonial-text {
+            font-size: .88rem;
+            line-height: 1.7;
+            color: #424245;
+            margin-bottom: 16px
+        }
+
+        .testimonial-author {
+            font-weight: 600;
+            font-size: .85rem
+        }
+
+        .testimonial-date {
+            font-size: .72rem;
+            color: #86868b;
+            margin-top: 2px
+        }
+
+        /* ===== CALCULATOR ===== */
+        .calc-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            align-items: start
+        }
+
+        .calc-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 20px
+        }
+
+        .calc-group label {
+            font-size: .78rem;
+            font-weight: 600;
+            color: #424245;
+            margin-bottom: 6px;
+            display: block
+        }
+
+        .calc-options {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap
+        }
+
+        .calc-option {
+            padding: 8px 18px;
+            border-radius: 980px;
+            border: 1px solid rgba(0, 0, 0, .1);
+            font-size: .8rem;
+            color: #6e6e73;
+            transition: all .2s;
+            cursor: pointer;
+        }
+
+        .calc-option.active,
+        .calc-option:hover {
+            border-color: #1d1d1f;
+            color: #1d1d1f;
+            background: rgba(0, 0, 0, .02)
+        }
+
+        .calc-range {
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 3px;
+            border-radius: 2px;
+            background: rgba(0, 0, 0, .08);
+            outline: none
+        }
+
+        .calc-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #1d1d1f;
+            cursor: pointer
+        }
+
+        .calc-range-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-top: 8px;
+            letter-spacing: -.02em
+        }
+
+        .calc-preview {
+            padding: 40px;
+            border-radius: 20px;
+            background: #f5f5f7;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .calc-preview-amount {
+            font-size: 3rem;
+            font-weight: 700;
+            letter-spacing: -.03em;
+            color: #1d1d1f
+        }
+
+        .calc-preview-note {
+            color: #86868b;
+            margin-top: 12px;
+            font-size: .8rem;
+            line-height: 1.6
+        }
+
+        /* ===== FAQ ===== */
+        .faq-item {
+            border-bottom: 1px solid rgba(0, 0, 0, .06);
+            padding: 20px 0;
+            cursor: pointer
+        }
+
+        .faq-q {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+            font-size: 1rem;
+            gap: 16px
+        }
+
+        .faq-q .icon {
+            font-size: .8rem;
+            color: #6e6e73;
+            transition: transform .3s;
+            flex-shrink: 0
+        }
+
+        .faq-item.active .faq-q .icon {
+            transform: rotate(45deg)
+        }
+
+        .faq-a {
+            max-height: 0;
+            overflow: hidden;
+            transition: all .4s cubic-bezier(.25, .1, .25, 1);
+            color: #6e6e73;
+            font-size: .9rem;
+            line-height: 1.7
+        }
+
+        .faq-item.active .faq-a {
+            max-height: 300px;
+            padding-top: 12px
+        }
+
+        /* ===== CTA ===== */
+        .cta {
+            padding: 140px 48px;
+            text-align: center;
+            background: #1d1d1f;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta::before {
+            content: '';
+            position: absolute;
+            top: -300px;
+            right: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(255, 255, 255, .03), transparent 70%);
+            border-radius: 50%;
+            pointer-events: none
+        }
+
+        .cta * {
+            position: relative;
+            z-index: 1
+        }
+
+        .cta h2 {
+            font-size: clamp(2rem, 3.5vw, 3.2rem);
+            color: #fff;
+            font-weight: 700;
+            letter-spacing: -.03em;
+            margin-bottom: 12px
+        }
+
+        .cta p {
+            color: rgba(255, 255, 255, .5);
+            max-width: 500px;
+            margin: 0 auto 32px;
+            font-size: 1.05rem;
+            line-height: 1.7
+        }
+
+        .cta .btn-primary {
+            background: #fff;
+            color: #1d1d1f
+        }
+
+        .cta .btn-primary:hover {
+            background: rgba(255, 255, 255, .85)
+        }
+
+        .cta .btn-outline {
+            border-color: rgba(255, 255, 255, .2);
+            color: #fff
+        }
+
+        .cta .btn-outline:hover {
+            border-color: rgba(255, 255, 255, .5);
+            background: rgba(255, 255, 255, .05)
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            padding: 48px 48px 24px;
+            background: #f5f5f7;
+            font-size: .8rem;
+            color: #6e6e73
+        }
+
+        .footer-grid {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 32px
+        }
+
+        .footer-brand .footer-logo {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #1d1d1f;
+            margin-bottom: 8px
+        }
+
+        .footer-brand p {
+            line-height: 1.6
+        }
+
+        .footer-col h4 {
+            font-weight: 600;
+            font-size: .8rem;
+            color: #1d1d1f;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: .05em
+        }
+
+        .footer-col a {
+            display: block;
+            color: #6e6e73;
+            margin-bottom: 8px;
+            transition: color .2s
+        }
+
+        .footer-col a:hover {
+            color: #1d1d1f
+        }
+
+        .footer-bottom {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding-top: 20px;
+            border-top: 1px solid rgba(0, 0, 0, .06);
+            display: flex;
+            justify-content: space-between
+        }
+
+        /* ===== FLOATING WA ===== */
+        .floating-wa {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            z-index: 99;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: #25D366;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 20px rgba(37, 211, 102, .25);
+            transition: all .3s;
+            opacity: 0;
+            transform: scale(0);
+        }
+
+        .floating-wa.visible {
+            opacity: 1;
+            transform: scale(1)
+        }
+
+        .floating-wa:hover {
+            transform: scale(1.08)
+        }
+
+        .floating-wa svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media(max-width:968px) {
+
+            .services-grid,
+            .advantages-grid,
+            .team-grid {
+                grid-template-columns: 1fr 1fr
+            }
+
+            .about-grid {
+                grid-template-columns: 1fr;
+                gap: 40px
+            }
+
+            .gallery-grid {
+                grid-template-columns: repeat(3, 1fr)
+            }
+
+            .calc-grid {
+                grid-template-columns: 1fr
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr 1fr
+            }
+        }
+
+        @media(max-width:768px) {
+            .nav {
+                padding: 0 20px
+            }
+
+            .nav-links {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(255, 255, 255, .98);
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                gap: 32px;
+                z-index: 99
+            }
+
+            .nav-links.open {
+                display: flex
+            }
+
+            .nav-links a {
+                font-size: 1.2rem;
+                color: #1d1d1f
+            }
+
+            .nav-cta {
+                display: none
+            }
+
+            .mobile-toggle {
+                display: flex
+            }
+
+            .hero {
+                padding: 100px 20px 60px
+            }
+
+            .hero-stats {
+                gap: 24px;
+                flex-wrap: wrap
+            }
+
+            .section {
+                padding: 80px 20px
+            }
+
+            .services-grid,
+            .advantages-grid {
+                grid-template-columns: 1fr
+            }
+
+            .team-grid {
+                grid-template-columns: 1fr 1fr
+            }
+
+            .gallery-grid {
+                grid-template-columns: repeat(2, 1fr)
+            }
+
+            .gallery-item:first-child {
+                grid-column: span 2;
+                grid-row: span 1
+            }
+
+            .testimonial {
+                min-width: 260px
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr
+            }
+
+            .floating-wa {
+                bottom: 16px;
+                right: 16px;
+                width: 48px;
+                height: 48px
+            }
+
+            .cta {
+                padding: 80px 20px
+            }
+        }
+
+        @media(max-width:480px) {
+            .team-grid {
+                grid-template-columns: 1fr
+            }
+        }
+    </style>
 </head>
 
 <body>
-    <h1>ООО РСК ДОММАСТЕР — Премиальный ремонт</h1>
+
+    <!-- NAV -->
+    <nav class="nav" id="nav">
+        <div class="nav-logo">ООО РСК <strong>ДОММАСТЕР</strong> <span>●</span></div>
+        <div class="nav-links" id="navLinks">
+            <a href="#services">Услуги</a>
+            <a href="#about">О нас</a>
+            <a href="#team">Команда</a>
+            <a href="#careers">Вакансии</a>
+            <a href="#work">Работы</a>
+            <a href="#reviews">Отзывы</a>
+            <a href="#faq">FAQ</a>
+            <a href="#contact" class="nav-cta">Связаться</a>
+        </div>
+        <div class="mobile-toggle" id="mobileToggle">
+            <span></span><span></span><span></span>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero" id="hero">
+        <div class="hero-content">
+            <div class="hero-badge"><span></span> ООО РСК ДОММАСТЕР — с 2009 года</div>
+            <h1>
+                Ремонт, который<br>
+                <span class="fade">выглядит дорого</span>
+            </h1>
+            <p>Квартиры и коттеджи под ключ. Без посредников, без сюрпризов. Гарантия до 5 лет.</p>
+            <div class="hero-actions" id="heroActions">
+                <a href="https://wa.me/79174806003" target="_blank" class="btn btn-wa">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                    </svg>
+                    WhatsApp
+                </a>
+                <a href="#work" class="btn btn-outline">Примеры работ</a>
+                <a href="#calc" class="btn btn-primary">Рассчитать стоимость</a>
+            </div>
+            <div class="hero-stats" id="heroStats">
+                <div>
+                    <div class="hero-stat-value">200+</div>
+                    <div class="hero-stat-label">объектов</div>
+                </div>
+                <div>
+                    <div class="hero-stat-value">16 лет</div>
+                    <div class="hero-stat-label">опыта</div>
+                </div>
+                <div>
+                    <div class="hero-stat-value">5 лет</div>
+                    <div class="hero-stat-label">гарантии</div>
+                </div>
+                <div>
+                    <div class="hero-stat-value">Салават</div>
+                    <div class="hero-stat-label">Стерлитамак · Ишимбай</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SERVICES -->
+    <section class="section services" id="services">
+        <div class="section-inner">
+            <div class="section-label">Премиальный сервис</div>
+            <h2 class="section-title">Элитный ремонт и комплектация объектов</h2>
+            <p class="section-desc">Реализуем амбициозные дизайнерские проекты «под ключ». Освобождаем вас от всех забот, закупок и контроля.
+            </p>
+            <div class="services-grid">
+                <div class="service-card">
+                    <span class="service-card-icon">🎨</span>
+                    <div class="service-card-title">Дизайнерский ремонт</div>
+                    <div class="service-card-price">от 12 000 ₽/м²</div>
+                    <div class="service-card-desc">Полная реализация дизайн-проекта любой сложности: сложные световые линии, идеальная геометрия, скрытые трековые системы.</div>
+                    <ul>
+                        <li>Авторский надзор 24/7</li>
+                        <li>Полный контроль качества</li>
+                    </ul>
+                </div>
+                <div class="service-card" style="border: 2px solid #1d1d1f; position: relative; overflow: hidden;">
+                    <div style="position: absolute; top: 12px; right: 12px; background: #1d1d1f; color: #fff; font-size: 0.65rem; font-weight: 700; padding: 4px 10px; border-radius: 999px;">ТОП ВЫБОР</div>
+                    <span class="service-card-icon">✦</span>
+                    <div class="service-card-title">VIP / Элитный коттедж</div>
+                    <div class="service-card-price">от 18 000 ₽/м²</div>
+                    <div class="service-card-desc">Премиальная отделка загородных резиденций и пентхаусов. Крупноформатный керамогранит, инженерный паркет, премиум-электрика.</div>
+                    <ul>
+                        <li>Система «Умный Дом»</li>
+                        <li>Гарантия 5 лет по договору</li>
+                    </ul>
+                </div>
+                <div class="service-card">
+                    <span class="service-card-icon">🛋️</span>
+                    <div class="service-card-title">Комплектация под ключ</div>
+                    <div class="service-card-price">Индивидуальный чек</div>
+                    <div class="service-card-desc">Полный подбор и закупка премиальной мебели, кухонных гарнитуров (от 1.5 млн ₽), брендовой сантехники и эксклюзивного света.</div>
+                    <ul>
+                        <li>Прямые скидки от салонов</li>
+                        <li>Приемка и монтаж меблировки</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- VIP PARTNERS & ECOSYSTEM -->
+    <section class="section" style="background:#fff">
+        <div class="section-inner">
+            <div class="section-label">Партнерская экосистема</div>
+            <h2 class="section-title">Сотрудничаем с топовыми салонами и студиями</h2>
+            <p class="section-desc">Вам не нужно бегать по магазинам. Мы напрямую работаем с лучшими поставщиками и дизайнерами региона.</p>
+            <div class="advantages-grid">
+                <div class="advantage">
+                    <span class="advantage-icon">📐</span>
+                    <div class="advantage-title">Топ-дизайнеры</div>
+                    <div class="advantage-desc">Прямая связь с ведущими архитекторами и дизайнерами интерьеров.</div>
+                </div>
+                <div class="advantage">
+                    <span class="advantage-icon">🍳</span>
+                    <div class="advantage-title">Кухни премиум</div>
+                    <div class="advantage-desc">Комплектация премиальными кухнями от 1.5 до 5 млн ₽ с бытовой техникой.</div>
+                </div>
+                <div class="advantage">
+                    <span class="advantage-icon">🚿</span>
+                    <div class="advantage-title">Элитная сантехника</div>
+                    <div class="advantage-desc">Прямые поставки брендов Hansgrohe, Duravit, Villeroy & Boch, Gessi.</div>
+                </div>
+                <div class="advantage">
+                    <span class="advantage-icon">⚡</span>
+                    <div class="advantage-title">Умный дом & Свет</div>
+                    <div class="advantage-desc">Интеграция систем умного дома, автоматизации штор и световых сценариев.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section class="section" id="about">
+        <div class="section-inner">
+            <div class="about-grid">
+                <div class="about-text">
+                    <div class="section-label">О компании №1</div>
+                    <h2 class="section-title">ООО РСК ДОММАСТЕР — Лидер ремонта в Южном Башкортостане</h2>
+                    <p><strong>ООО РСК ДОММАСТЕР</strong> — ремонтно-строительная компания <strong>№1</strong> в регионе. Работаем на рынке
+                        ремонта и отделки <strong>с 2009 года</strong>. За 16 лет работы мы сдали более <strong>200
+                            объектов</strong> — от дизайнерских квартир до элитных загородных коттеджей.</p>
+                    <p>Наш главный офис и производственная база расположены в <strong>г. Салават (ул. Уфимская, д. 37А)</strong>. Мы обеспечиваем оперативный выезд и качественный ремонт в <strong>Салавате, Стерлитамаке и Ишимбае</strong>. В штате только высококлассные мастера с опытом от 7 лет. Работаем строго по договору, с прозрачной сметмой SmetaAI и гарантией 5 лет.</p>
+                    <a href="https://wa.me/79174806003" target="_blank" class="btn btn-primary"
+                        style="margin-top:8px">Связаться</a>
+                </div>
+                <div class="about-stats">
+                    <div class="about-stat">
+                        <div class="about-stat-value">200+</div>
+                        <div class="about-stat-label">объектов сдано</div>
+                    </div>
+                    <div class="about-stat">
+                        <div class="about-stat-value">16</div>
+                        <div class="about-stat-label">лет на рынке</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ADVANTAGES -->
+    <section class="section advantages">
+        <div class="section-inner">
+            <div class="section-label">Преимущества</div>
+            <h2 class="section-title">Почему выбирают нас</h2>
+            <div class="advantages-grid">
+                <div class="advantage"><span class="advantage-icon">📋</span>
+                    <div class="advantage-title">Прозрачная смета</div>
+                    <div class="advantage-desc">Никаких скрытых платежей</div>
+                </div>
+                <div class="advantage"><span class="advantage-icon">👷</span>
+                    <div class="advantage-title">Свои бригады</div>
+                    <div class="advantage-desc">Опыт от 7 лет</div>
+                </div>
+                <div class="advantage"><span class="advantage-icon">🛡️</span>
+                    <div class="advantage-title">Гарантия до 5 лет</div>
+                    <div class="advantage-desc">Официально в договоре</div>
+                </div>
+                <div class="advantage"><span class="advantage-icon">💰</span>
+                    <div class="advantage-title">Поэтапная оплата</div>
+                    <div class="advantage-desc">После приёмки этапа</div>
+                </div>
+                <div class="advantage"><span class="advantage-icon">🤝</span>
+                    <div class="advantage-title">Личный прораб</div>
+                    <div class="advantage-desc">Фотоотчёты каждый день</div>
+                </div>
+                <div class="advantage"><span class="advantage-icon">🔍</span>
+                    <div class="advantage-title">Отдел качества</div>
+                    <div class="advantage-desc">Проверка перед сдачей</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TEAM -->
+    <section class="section" id="team">
+        <div class="section-inner">
+            <div class="section-label">Команда</div>
+            <h2 class="section-title">Мастера своего дела</h2>
+            <p class="section-desc">Опытные профессионалы с подтверждённой квалификацией.</p>
+            <div class="team-grid">
+                <div class="team-card">
+                    <div class="team-card-avatar">👨‍🔧</div>
+                    <div class="team-card-body">
+                        <div class="team-card-name">Александр</div>
+                        <div class="team-card-role">Старший прораб</div>
+                        <div class="team-card-exp">14 лет · 87 объектов</div>
+                    </div>
+                </div>
+                <div class="team-card">
+                    <div class="team-card-avatar">👨‍🎨</div>
+                    <div class="team-card-body">
+                        <div class="team-card-name">Дмитрий</div>
+                        <div class="team-card-role">Мастер-отделочник</div>
+                        <div class="team-card-exp">9 лет · 65 объектов</div>
+                    </div>
+                </div>
+                <div class="team-card">
+                    <div class="team-card-avatar">⚡</div>
+                    <div class="team-card-body">
+                        <div class="team-card-name">Сергей</div>
+                        <div class="team-card-role">Инженер-электрик</div>
+                        <div class="team-card-exp">11 лет · 72 объекта</div>
+                    </div>
+                </div>
+                <div class="team-card">
+                    <div class="team-card-avatar">🔲</div>
+                    <div class="team-card-body">
+                        <div class="team-card-name">Андрей</div>
+                        <div class="team-card-role">Плиточник</div>
+                        <div class="team-card-exp">8 лет · 52 объекта</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CAREERS / VACANCIES -->
+    <section class="section" id="careers" style="background:#f5f5f7">
+        <div class="section-inner">
+            <div class="section-label">Работа в ДОММАСТЕР</div>
+            <h2 class="section-title">Набираем мастеров в команду №1</h2>
+            <p class="section-desc">Постоянный поток объектов в Салавате, Стерлитамаке и Ишимбае. Своевременная сдельная оплата, честное отношение и все условия для профессионалов.</p>
+            
+            <div class="advantages-grid" style="margin-bottom:40px">
+                <div class="advantage">
+                    <span class="advantage-icon">💵</span>
+                    <div class="advantage-title">Высокий доход</div>
+                    <div class="advantage-desc">Поэтапные выплаты сразу после сдачи этапа. Никаких просрочек и срезки расценок.</div>
+                </div>
+                <div class="advantage">
+                    <span class="advantage-icon">🚀</span>
+                    <div class="advantage-title">Загрузка 365 дней</div>
+                    <div class="advantage-desc">Постоянные объекты круглый год без зимних простоев и поиска заказов.</div>
+                </div>
+                <div class="advantage">
+                    <span class="advantage-icon">📱</span>
+                    <div class="advantage-title">Порядок и SmetaAI</div>
+                    <div class="advantage-desc">Точные чертежи, понятные сметы, своевременная поставка материалов.</div>
+                </div>
+                <div class="advantage">
+                    <span class="advantage-icon">🏆</span>
+                    <div class="advantage-title">Рост до Прораба</div>
+                    <div class="advantage-desc">Уважение к мастерам. Возможность возглавить направление или стать прорабом.</div>
+                </div>
+            </div>
+
+            <div style="background:#fff;padding:40px 32px;border-radius:20px;border:1px solid rgba(0,0,0,0.06);max-width:850px;margin:0 auto">
+                <h3 style="font-size:1.4rem;font-weight:700;margin-bottom:20px;color:#1d1d1f;text-align:center">Приглашаем специалистов:</h3>
+                <ul style="list-style:none;display:flex;flex-direction:column;gap:14px;margin-bottom:32px">
+                    <li style="font-size:0.95rem;color:#424245;display:flex;align-items:center;gap:12px">
+                        <span style="background:#1d1d1f;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.75rem;flex-shrink:0">✓</span>
+                        <span><strong>Мастера-отделочники / Универсалы</strong> — гипсокартон, штукатурка, шпаклевка, малярные работы.</span>
+                    </li>
+                    <li style="font-size:0.95rem;color:#424245;display:flex;align-items:center;gap:12px">
+                        <span style="background:#1d1d1f;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.75rem;flex-shrink:0">✓</span>
+                        <span><strong>Плиточники-облицовщики</strong> — укладка керамогранита, крупного формата, запил под 45°.</span>
+                    </li>
+                    <li style="font-size:0.95rem;color:#424245;display:flex;align-items:center;gap:12px">
+                        <span style="background:#1d1d1f;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.75rem;flex-shrink:0">✓</span>
+                        <span><strong>Сантехники и Монтажники ОВК</strong> — разводка труб, отопление, теплые полы, котельное оборудование.</span>
+                    </li>
+                    <li style="font-size:0.95rem;color:#424245;display:flex;align-items:center;gap:12px">
+                        <span style="background:#1d1d1f;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.75rem;flex-shrink:0">✓</span>
+                        <span><strong>Электромонтажники</strong> — штробление, сборка щитов, черновой и чистовой электромонтаж.</span>
+                    </li>
+                </ul>
+                <div style="text-align:center">
+                    <p style="font-size:0.95rem;color:#6e6e73;margin-bottom:20px;font-weight:500">Хотите работать в надежной компании с отличным доходом? Не разочаруетесь!</p>
+                    <a href="https://wa.me/79174806003?text=Здравствуйте!%20Хочу%20работать%20мастером%20в%20команде%20ДОММАСТЕР" target="_blank" class="btn btn-wa" style="font-size:1rem;padding:14px 32px">
+                        💬 Написать директору (WhatsApp)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- GALLERY -->
+    <section class="section gallery" id="work">
+        <div class="section-inner">
+            <div class="section-label">Портфолио</div>
+            <h2 class="section-title">Наши проекты</h2>
+            <p class="section-desc">Более 200 реализованных проектов. Качество, которое видно.</p>
+            <div class="gallery-grid" id="galleryGrid"></div>
+            <div style="text-align:center;margin-top:32px">
+                <a href="https://wa.me/79174806003" target="_blank" class="btn btn-primary">Хочу так же</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section class="section" id="reviews">
+        <div class="section-inner">
+            <div class="section-label">Отзывы</div>
+            <h2 class="section-title">Что говорят клиенты</h2>
+            <div class="testimonials-track" id="testimonialsTrack">
+                <div class="testimonial">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <div class="testimonial-text">«Все работы выполнили чётко по графику. Мастера аккуратные, после себя
+                        убирали. Результатом на 100% довольны!»</div>
+                    <div class="testimonial-author">Елена</div>
+                    <div class="testimonial-date">Март 2023</div>
+                </div>
+                <div class="testimonial">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <div class="testimonial-text">«Всё сделано качественно, аккуратно и в срок. Используют проверенные
+                        бренды. Рекомендую всем!»</div>
+                    <div class="testimonial-author">Иван</div>
+                    <div class="testimonial-date">Февраль 2025</div>
+                </div>
+                <div class="testimonial">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <div class="testimonial-text">«Цена оказалась даже ниже сметы. Ремонт сдал под ключ — заехал и сразу
+                        начал жить.»</div>
+                    <div class="testimonial-author">Алексей</div>
+                    <div class="testimonial-date">Декабрь 2023</div>
+                </div>
+                <div class="testimonial">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <div class="testimonial-text">«Стены ровные, углы прямые, плитка без сколов. Я даже на объект не
+                        приезжала до приёмки.»</div>
+                    <div class="testimonial-author">Марина</div>
+                    <div class="testimonial-date">Февраль 2026</div>
+                </div>
+                <div class="testimonial">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <div class="testimonial-text">«Профессионально, всё по договорённости. Убирали за собой каждый день
+                        — никакой грязи.»</div>
+                    <div class="testimonial-author">Дмитрий</div>
+                    <div class="testimonial-date">Сентябрь 2024</div>
+                </div>
+                <div class="testimonial">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <div class="testimonial-text">«Быстро, качественно и по адекватной цене. Буду советовать всем
+                        друзьям!»</div>
+                    <div class="testimonial-author">Ольга</div>
+                    <div class="testimonial-date">Май 2023</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CALCULATOR -->
+    <section class="section" id="calc" style="background:#f5f5f7">
+        <div class="section-inner">
+            <div class="section-label">Калькулятор</div>
+            <h2 class="section-title">Примерная стоимость</h2>
+            <p class="section-desc">Точную смету рассчитаем после бесплатного замера.</p>
+            <div class="calc-grid">
+                <div class="calc-controls">
+                    <div class="calc-group">
+                        <label>Тип помещения</label>
+                        <div class="calc-options" id="calcType">
+                            <span class="calc-option active">Квартира</span>
+                            <span class="calc-option">Коттедж</span>
+                        </div>
+                    </div>
+                    <div class="calc-group">
+                        <label>Площадь: <strong id="calcLabel">60 м²</strong></label>
+                        <input type="range" class="calc-range" id="calcArea" min="10" max="500" value="60" step="5">
+                        <div
+                            style="display:flex;justify-content:space-between;font-size:.7rem;color:#86868b;margin-top:4px">
+                            <span>10 м²</span><span>500 м²</span>
+                        </div>
+                    </div>
+                    <div class="calc-group">
+                        <label>Уровень проекта</label>
+                        <div class="calc-options" id="calcRepair">
+                            <span class="calc-option active" data-price="12000">Дизайнерский (от 12 000 ₽/м²)</span>
+                            <span class="calc-option" data-price="18000">VIP / Коттедж (от 18 000 ₽/м²)</span>
+                            <span class="calc-option" data-price="25000">Элитный Пентхаус (от 25 000 ₽/м²)</span>
+                        </div>
+                    </div>
+                    <div class="calc-group">
+                        <label>Дополнительные опции</label>
+                        <div class="calc-options" id="calcExtra" style="gap:6px">
+                            <span class="calc-option" data-price="2500">Умный Дом KNX +2 500 ₽/м²</span>
+                            <span class="calc-option" data-price="1800">Премиум Сантехника +1 800 ₽/м²</span>
+                            <span class="calc-option" data-price="1500">Авторский надзор +1 500 ₽/м²</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="calc-preview">
+                    <div
+                        style="font-size:.72rem;color:#86868b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">
+                        Примерно</div>
+                    <div class="calc-preview-amount" id="calcTotal">270 000 ₽</div>
+                    <div class="calc-preview-note" id="calcDetail">60 м² · Капитальный</div>
+                    <div class="calc-preview-note" style="margin-top:16px">Точную стоимость — после замера. Выезд
+                        бесплатный.</div>
+                    <a href="https://wa.me/79174806003" target="_blank" class="btn btn-primary"
+                        style="margin-top:20px">Получить смету</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section" id="faq">
+        <div class="section-inner">
+            <div class="section-label">FAQ</div>
+            <h2 class="section-title">Частые вопросы</h2>
+            <div style="max-width:700px;margin:0 auto">
+                <div class="faq-item active">
+                    <div class="faq-q">Сколько длится ремонт? <span class="icon">+</span></div>
+                    <div class="faq-a">Косметика — 15-30 дней, капремонт — 40-65 дней, коттедж — от 60 до 200 дней.
+                        Сроки фиксируем в договоре.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q">Можно ли жить во время ремонта? <span class="icon">+</span></div>
+                    <div class="faq-a">При косметическом — да. При капитальном — рекомендуем выехать. Помогаем с
+                        организацией.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q">Как контролировать ход работ? <span class="icon">+</span></div>
+                    <div class="faq-a">Личный прораб с ежедневными фотоотчётами и отдел качества — финальная проверка
+                        перед сдачей.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q">Даёте гарантию? <span class="icon">+</span></div>
+                    <div class="faq-a">Да, до 5 лет на все виды работ. Условия в договоре. Дефекты устраняем бесплатно.
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q">Как происходит оплата? <span class="icon">+</span></div>
+                    <div class="faq-a">Поэтапно — платите только за выполненный этап. Аванс только на материалы. Все
+                        суммы в договоре.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta" id="contact">
+        <h2>Бесплатный замер и консультация</h2>
+        <p>Выезжаем на объект в удобное время. Поможем с выбором, рассчитаем смету.</p>
+        <div class="cta-buttons">
+            <a href="https://wa.me/79174806003" target="_blank" class="btn btn-primary">Написать в WhatsApp</a>
+            <a href="tel:+79174806003" class="btn btn-outline">📞 Позвонить</a>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <div class="footer-logo">ООО РСК ДОММАСТЕР — Компания №1</div>
+                <p>Ремонтно-строительная компания №1 в южной агломерации Башкортостана: Салават, Стерлитамак, Ишимбай. Капитальный и дизайнерский ремонт квартир и коттеджей под ключ. Гарантия до 5 лет.</p>
+                <p style="margin-top:8px;font-size:0.75rem;color:#86868b">📍 Адрес офиса: 453265, РБ, г. Салават, ул. Уфимская, д. 37А</p>
+            </div>
+            <div class="footer-col">
+                <h4>Услуги</h4><a href="#services">Косметический</a><a href="#services">Капитальный</a><a
+                    href="#services">VIP / Премиум</a><a href="#services">Дизайн-проект</a>
+            </div>
+            <div class="footer-col">
+                <h4>Компания №1</h4><a href="#about">О нас</a><a href="#team">Команда</a><a href="#work">Работы</a><a
+                    href="#reviews">Отзывы</a>
+            </div>
+            <div class="footer-col">
+                <h4>Контакты</h4>
+                <a href="tel:+79174806003">📞 +7 (917) 480-60-03</a>
+                <a href="https://wa.me/79174806003" target="_blank">💬 WhatsApp</a>
+                <a href="#contact">Заказать замер</a>
+            </div>
+        </div>
+        <div class="footer-bottom"><span>© 2026 ООО РСК ДОММАСТЕР</span><span>Салават · Стерлитамак · Ишимбай</span></div>
+    </footer>
+
+    <!-- FLOATING WA -->
+    <a href="https://wa.me/79174806003" target="_blank" class="floating-wa" id="floatingWa">
+        <svg viewBox="0 0 24 24">
+            <path
+                d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+        </svg>
+    </a>
+
+    <script>
+        // Mobile nav
+        document.getElementById('mobileToggle').addEventListener('click', () => {
+            document.getElementById('mobileToggle').classList.toggle('active');
+            document.getElementById('navLinks').classList.toggle('open');
+        });
+        document.querySelectorAll('.nav-links a').forEach(a => a.addEventListener('click', () => {
+            document.getElementById('mobileToggle').classList.remove('active');
+            document.getElementById('navLinks').classList.remove('open');
+        }));
+
+        // Nav scroll
+        window.addEventListener('scroll', () => {
+            document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 40);
+            document.getElementById('floatingWa').classList.toggle('visible', window.scrollY > 200);
+        });
+
+        // Scroll reveal
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(e => { if (e.isIntersecting) { e.target.style.opacity = '1'; e.target.style.transform = 'translateY(0)'; } });
+        }, { threshold: .1 });
+
+        document.querySelectorAll('.hero-badge,.hero h1,.hero p,.hero-actions,.hero-stats').forEach((el, i) => {
+            el.style.transition = `all .8s cubic-bezier(.25,.1,.25,1) ${i * .15}s`;
+            observer.observe(el);
+        });
+        document.querySelectorAll('.service-card,.advantage,.team-card,.about-stat,.testimonial,.calc-preview').forEach(el => {
+            el.style.transition = 'all .6s cubic-bezier(.25,.1,.25,1)'; observer.observe(el);
+        });
+        document.querySelectorAll('.service-card').forEach((el, i) => el.style.transitionDelay = i * 80 + 'ms');
+        document.querySelectorAll('.advantage').forEach((el, i) => el.style.transitionDelay = i * 50 + 'ms');
+        document.querySelectorAll('.team-card').forEach((el, i) => el.style.transitionDelay = i * 80 + 'ms');
+
+        // Gallery
+        const galleryImages = [
+            'photos/media_a29edb272cb149c9.jpg', 'photos/media_b0c369d88ea6549d.jpg',
+            'photos/media_c798095e87d3d5bc.jpg', 'photos/media_d55d177fc1b77940.jpg',
+            'photos/media_e48191ccad8210fd.jpg', 'photos/media_f04e0db3b31a48ef.jpg',
+            'photos/media_f6a49586110c5bdf.jpg', 'photos/viewer_3ae939d912ed06ec.jpg',
+            'photos/viewer_71539fd7f422c49a.jpg', 'photos/viewer_e470aaae997780ea.jpg',
+        ];
+        const grid = document.getElementById('galleryGrid');
+        galleryImages.forEach(src => {
+            const item = document.createElement('div'); item.className = 'gallery-item';
+            item.innerHTML = `<img src="${src}" loading="lazy"><div class="overlay" style="position:absolute;inset:0;background:rgba(0,0,0,.08);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .3s"><span style="color:#fff;font-size:.7rem;font-weight:600;background:rgba(0,0,0,.6);padding:6px 14px;border-radius:980px">↑ Открыть</span></div>`;
+            item.querySelector('.overlay').addEventListener('mouseenter', function () { this.style.opacity = '1' });
+            item.querySelector('.overlay').addEventListener('mouseleave', function () { this.style.opacity = '0' });
+            item.addEventListener('click', () => window.open(src, '_blank'));
+            grid.appendChild(item);
+        });
+
+        // FAQ
+        document.querySelectorAll('.faq-item').forEach(el => {
+            el.querySelector('.faq-q').addEventListener('click', () => el.classList.toggle('active'));
+        });
+
+        // Calculator
+        let calcPrice = 12000, calcExtras = 0, calcArea = 60;
+        const calcOptions = (sel, cb) => document.querySelectorAll(sel).forEach(el => el.addEventListener('click', function () {
+            document.querySelectorAll(sel).forEach(o => o.classList.remove('active')); this.classList.add('active'); cb(this);
+        }));
+        calcOptions('#calcType .calc-option', () => { });
+        calcOptions('#calcRepair .calc-option', el => { calcPrice = parseInt(el.dataset.price); updateCalc() });
+        document.querySelectorAll('#calcExtra .calc-option').forEach(el => el.addEventListener('click', function () {
+            this.classList.toggle('active'); calcExtras = 0;
+            document.querySelectorAll('#calcExtra .calc-option.active').forEach(e => calcExtras += parseInt(e.dataset.price));
+            updateCalc();
+        }));
+        document.getElementById('calcArea').addEventListener('input', function () { calcArea = parseInt(this.value); document.getElementById('calcLabel').textContent = this.value + ' м²'; updateCalc() });
+        function updateCalc() {
+            const repairName = document.querySelector('#calcRepair .calc-option.active').textContent;
+            const total = calcArea * (calcPrice + calcExtras);
+            document.getElementById('calcTotal').textContent = Math.round(total).toLocaleString('ru') + ' ₽';
+            document.getElementById('calcDetail').textContent = calcArea + ' м² · ' + repairName + (calcExtras ? ' + доп. услуги' : '');
+        }
+        updateCalc();
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener('click', e => {
+            const t = document.querySelector(a.getAttribute('href'));
+            if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth', block: 'start' }) }
+        }));
+    </script>
 </body>
+
 </html>
